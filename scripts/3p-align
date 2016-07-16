@@ -45,12 +45,9 @@ sys$run({
                                     200 + read_length)
     flank_3p_seq = sam$getSeq(sam$FaFile(args$reference), flank_3p_annotation)
 
-    mat = bios$nucleotideSubstitutionMatrix(match = 1,
-                                            mismatch = -4,
-                                            baseOnly = TRUE)
+    mat = bios$nucleotideSubstitutionMatrix(match = 1, mismatch = -4, baseOnly = TRUE)
 
-    alignments = bios$pairwiseAlignment(reads_3p, flank_3p_seq,
-                                        type = 'local',
+    alignments = bios$pairwiseAlignment(reads_3p, flank_3p_seq, type = 'local',
                                         substitutionMatrix = mat,
                                         gapOpening = 20, gapExtension = 20)
 
