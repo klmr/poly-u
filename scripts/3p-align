@@ -1,0 +1,65 @@
+#!/usr/bin/env Rscript
+
+sys = modules::import('klmr/sys')
+
+sys$run({
+    args = sys$cmd$parse(opt('r', 'reference', 'reference sequence file (fasta)'),
+                         opt('a', 'annotation', 'gene reference annotation (GTF)'),
+                         opt('j', 'ncores', 'number of cores to use', 1L),
+                         arg('genes', 'ID–gene name map file'),
+                         arg('fastq', '3ʹ end sequence file'))
+
+    io = modules::import('ebi-predocs/ebits/io')
+    sr = modules::import_package('ShortRead')
+    rtl = modules::import_package('rtracklayer')
+    sam = modules::import_package('Rsamtools')
+    gr = modules::import_package('GenomicRanges')
+    dplyr = modules::import_package('dplyr', attach = TRUE)
+    bios = modules::import_package('Biostrings')
+
+    genes = io$read_table(args$genes) %>%
+        select(ReadID = 1, Gene = 2)
+
+    # Load 3ʹ reads for which 5ʹ reads are mapped successfully.
+    seq_3p = sr$readFastq(args$fastq)
+    matching_3p = match(genes$ReadID, as.character(sr$id(seq_3p)))
+    seq_3p = seq_3p[matching_3p]
+
+    # Load annotation of genes with corresponding 5ʹ reads.
+    annotation = rtl$import(args$annotation)
+    gene_id = gr$elementMetadata(annotation)$gene_id
+    annotation = annotation[match(genes$Gene, gene_id)]
+
+    stopifnot(length(annotation) == length(seq_3p))
+
+    # Filter non-interesting reads.
+    gene_biotype = gr$elementMetadata(annotation)$gene_biotype
+    features_of_interest = gene_biotype == 'protein_coding'
+    annotation = annotation[features_of_interest]
+    seq_3p = seq_3p[features_of_interest]
+    reads_3p = bios$reverseComplement(sr$sread(seq_3p))
+
+    read_length = gr$width(reads_3p)[1]
+
+    flank_3p_annotation = gr$resize(gr$flank(annotation, 200, FALSE),
+                                    200 + read_length)
+    flank_3p_seq = sam$getSeq(sam$FaFile(args$reference), flank_3p_annotation)
+
+    mat = bios$nucleotideSubstitutionMatrix(match = 1,
+                                            mismatch = -4,
+                                            baseOnly = TRUE)
+
+    alignments = bios$pairwiseAlignment(reads_3p, flank_3p_seq,
+                                        type = 'local',
+                                        substitutionMatrix = mat,
+                                        gapOpening = 20, gapExtension = 20)
+
+    # Proper alignments that are anchored at 3ʹ must end after the end of the
+    # gene (i.e. at position >= read_length) because otherwise they end within
+    # the gene body. Ending AFTER the gene body is fine, since there may be a 3ʹ
+    # UTR in the read.
+
+    # FIXME: implement.
+})
+
+# vim: ft=r
