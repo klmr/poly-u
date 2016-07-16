@@ -59,7 +59,21 @@ sys$run({
     # the gene body. Ending AFTER the gene body is fine, since there may be a 3ʹ
     # UTR in the read.
 
-    # FIXME: implement.
+    valid_alignments = gr$end(alignments@subject@range) >= read_length
+    alignments = alignments[valid_alignments]
+    align_names = as.character(sr$id(seq_3p[valid_alignments]))
+
+    # Furthermore, we want alignments that continue with `A…` in the pattern.
+
+    pattern = alignments@pattern
+    read_tails = substr(pattern@unaligned, gr$end(pattern@range) + 1,
+                        gr$width(pattern@unaligned)) %>%
+        setNames(align_names)
+
+    read_tails = read_tails[substr(read_tails, 1, 1) == 'A']
+    tail_runs = lapply(strsplit(read_tails, ''), rle)
+    modules::import('klmr/functional/lambda')
+    poly_a_lengths = vapply(tail_runs, x -> x$lengths[1], 0L)
 })
 
 # vim: ft=r
