@@ -80,10 +80,10 @@ mapped-reads: ${mapped-reads}
 
 .SECONDEXPANSION:
 
-${data_dir}/mapped-paired-end/%.bam: $$(call find-fastq,%) ${index}
+${data_dir}/mapped-paired-end/%.bam: $$(call find-fastq,%) ${infected-index}
 	mkdir -p "$(dir $@)"
 	${bsub} -n 6 -M24000 -R'select[mem>24000]' -R'rusage[mem=24000]' \
-		"STAR --runThreadN 6 --genomeDir '$(dir ${index})' \
+		"STAR --runThreadN 6 --genomeDir '$(dir ${infected-index})' \
 		--runMode alignReads --alignEndsType Local \
 		--readFilesIn $(call find-fastq,$@) --readFilesCommand 'gunzip -c' \
 		--outSAMtype BAM Unsorted --outFileNamePrefix '$(basename $@).'"
@@ -91,10 +91,10 @@ ${data_dir}/mapped-paired-end/%.bam: $$(call find-fastq,%) ${index}
 
 find-fastq_r5=raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(basename $(notdir $1))_R5.fastq.gz
 
-${data_dir}/mapped/%.bam: $$(call find-fastq_r5,%) ${index}
+${data_dir}/mapped/%.bam: $$(call find-fastq_r5,%) ${infected-index}
 	mkdir -p "$(dir $@)"
 	${bsub} -n 6 -M24000 -R'select[mem>24000]' -R'rusage[mem=24000]' \
-		"STAR --runThreadN 6 --genomeDir '$(dir ${index})' \
+		"STAR --runThreadN 6 --genomeDir '$(dir ${infected-index})' \
 		--runMode alignReads --alignEndsType Local \
 		--readFilesIn $(call find-fastq_r5,$@) --readFilesCommand 'gunzip -c' \
 		--outSAMtype BAM Unsorted --outFileNamePrefix '$(basename $@).'"
