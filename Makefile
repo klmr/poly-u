@@ -80,24 +80,22 @@ mapped-reads: ${mapped-reads}
 
 .SECONDEXPANSION:
 
-${data_dir}/mapped-paired-end/%.bam: $$(call find-fastq,%) ${index} ${annotation}
+${data_dir}/mapped-paired-end/%.bam: $$(call find-fastq,%) ${index}
 	mkdir -p "$(dir $@)"
 	${bsub} -n 6 -M24000 -R'select[mem>24000]' -R'rusage[mem=24000]' \
 		"STAR --runThreadN 6 --genomeDir '$(dir ${index})' \
 		--runMode alignReads --alignEndsType Local \
-		--sjdbGTFfile '${annotation}' \
 		--readFilesIn $(call find-fastq,$@) --readFilesCommand 'gunzip -c' \
 		--outSAMtype BAM Unsorted --outFileNamePrefix '$(basename $@).'"
 	mv "$(basename $@).Aligned.out.bam" "$(basename $@).bam"
 
 find-fastq_r5=raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(basename $(notdir $1))_R5.fastq.gz
 
-${data_dir}/mapped/%.bam: $$(call find-fastq_r5,%) ${index} ${annotation}
+${data_dir}/mapped/%.bam: $$(call find-fastq_r5,%) ${index}
 	mkdir -p "$(dir $@)"
 	${bsub} -n 6 -M24000 -R'select[mem>24000]' -R'rusage[mem=24000]' \
 		"STAR --runThreadN 6 --genomeDir '$(dir ${index})' \
 		--runMode alignReads --alignEndsType Local \
-		--sjdbGTFfile '${annotation}' \
 		--readFilesIn $(call find-fastq_r5,$@) --readFilesCommand 'gunzip -c' \
 		--outSAMtype BAM Unsorted --outFileNamePrefix '$(basename $@).'"
 	mv "$(basename $@).Aligned.out.bam" "$(basename $@).bam"
