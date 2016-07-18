@@ -7,5 +7,4 @@ logfile="logs/$jobname-%J.log"
 errfile="logs/$jobname-%J.err"
 mkdir -p logs
 
-#bsub -J "$jobname" -o "$logfile" -e "$errfile" ${args[@]} "$job"
-eval "$job"
+bsub -J "$jobname" -o "$logfile" -e "$errfile" ${args[@]} "$job"
