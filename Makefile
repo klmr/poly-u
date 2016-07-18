@@ -3,10 +3,12 @@ ref_dir := ${data_dir}/reference
 index_dir := ${data_dir}/index
 reference := ${ref_dir}/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa
 viral-reference := ${ref_dir}/orsay-virus.fa
+infected-reference := ${ref_dir}/$(basename $(notdir ${reference}))-orv.fa
 annotation := ${ref_dir}/Caenorhabditis_elegans.WBcel235.84.gtf
 gene-annotation := ${ref_dir}/Caenorhabditis_elegans.WBcel235.84.genes.gtf
 index := ${index_dir}/Caenorhabditis_elegans/Genome
 viral-index := ${index_dir}/orsay-virus/Genome
+infected-index := ${index_dir}/Caenorhabditis_elegans-orv/Genome
 
 define find-fastq=
 $(foreach r,R5 R3,raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(basename $(notdir $1))_$r.fastq.gz)
@@ -25,8 +27,14 @@ ${reference}:
 .PHONY: viral-reference
 viral-reference: ${viral-reference}
 
-${viral-reference}:
-	cp "raw/reference/$(notdir $@)" "$@"
+${viral-reference}: raw/reference/$(notdir ${viral-reference})
+	cp "$<" "$@"
+
+.PHONY: infected-reference
+infected-reference: ${infected-reference}
+
+${infected-reference}: ${reference} ${viral-reference}
+	cat $+ > '$@'
 
 .PHONY: annotation
 annotation: ${annotation}
@@ -54,6 +62,15 @@ ${viral-index}: ${viral-reference}
 	mkdir -p "$(dir $@)"
 	STAR --runMode genomeGenerate --genomeSAindexNbases 3 \
 		--genomeDir '$(dir $@)' --genomeFastaFiles '$<'
+	rm Log.out
+
+.PHONY: infected-index
+infected-index: ${infected-index}
+
+${infected-index}: ${infected-reference}
+	mkdir -p "$(dir $@)"
+	${bsub} -n 12 "STAR --runThreadN 12 --runMode genomeGenerate \
+		--genomeDir '$(dir $@)' --genomeFastaFiles '$<'"
 	rm Log.out
 
 mapped-reads := $(foreach f,$(shell ls raw/c_elegans_*/fastq/*_R5.fastq.gz),${data_dir}/mapped/$(subst raw/,,$(subst fastq/,,$(subst _R5.fastq.gz,,$f))).bam)
