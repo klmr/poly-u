@@ -2,9 +2,11 @@ data_dir := data
 ref_dir := ${data_dir}/reference
 index_dir := ${data_dir}/index
 reference := ${ref_dir}/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa
+viral-reference := ${ref_dir}/orsay-virus.fa
 annotation := ${ref_dir}/Caenorhabditis_elegans.WBcel235.84.gtf
 gene-annotation := ${ref_dir}/Caenorhabditis_elegans.WBcel235.84.genes.gtf
 index := ${index_dir}/Caenorhabditis_elegans/Genome
+viral-index := ${index_dir}/orsay-virus/Genome
 
 define find-fastq=
 $(foreach r,R5 R3,raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(basename $(notdir $1))_$r.fastq.gz)
@@ -19,6 +21,12 @@ ${reference}:
 	mkdir -p "$(dir $@)"
 	wget 'ftp://ftp.ensembl.org/pub/release-84/fasta/caenorhabditis_elegans/dna/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz' -O $@.gz
 	gunzip $@.gz
+
+.PHONY: viral-reference
+viral-reference: ${viral-reference}
+
+${viral-reference}:
+	cp "raw/reference/$(notdir $@)" "$@"
 
 .PHONY: annotation
 annotation: ${annotation}
@@ -37,6 +45,16 @@ ${index}: ${reference}
 	mkdir -p "$(dir $@)"
 	${bsub} -n 12 "STAR --runThreadN 12 --runMode genomeGenerate \
 		--genomeDir '$(dir $@)' --genomeFastaFiles '$<'"
+	rm Log.out
+
+.PHONY: viral-index
+viral-index: ${viral-index}
+
+${viral-index}: ${viral-reference}
+	mkdir -p "$(dir $@)"
+	STAR --runMode genomeGenerate --genomeSAindexNbases 3 \
+		--genomeDir '$(dir $@)' --genomeFastaFiles '$<'
+	rm Log.out
 
 mapped-reads := $(foreach f,$(shell ls raw/c_elegans_*/fastq/*_R5.fastq.gz),${data_dir}/mapped/$(subst raw/,,$(subst fastq/,,$(subst _R5.fastq.gz,,$f))).bam)
 
