@@ -9,9 +9,7 @@ index := ${index_dir}/Caenorhabditis_elegans/Genome
 viral-index := ${index_dir}/orsay-virus/Genome
 infected-index := ${index_dir}/Caenorhabditis_elegans-orv/Genome
 
-define find-fastq=
-$(foreach r,R5 R3,raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(basename $(notdir $1))_$r.fastq.gz)
-endef
+fastq = $(foreach r,R5 R3,raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(basename $(notdir $1))_$r.fastq.gz)
 
 bsub := scripts/bsub -K -q research-rh7
 
@@ -79,23 +77,23 @@ mapped-reads: ${mapped-reads}
 
 .SECONDEXPANSION:
 
-data/mapped-paired-end/%.bam: $$(call find-fastq,%) ${infected-index}
+data/mapped-paired-end/%.bam: $$(call fastq,%) ${infected-index}
 	mkdir -p "$(dir $@)"
 	${bsub} -n 6 -M24000 -R'select[mem>24000]' -R'rusage[mem=24000]' \
 		"STAR --runThreadN 6 --genomeDir '$(dir ${infected-index})' \
 		--runMode alignReads --alignEndsType Local \
-		--readFilesIn $(call find-fastq,$@) --readFilesCommand 'gunzip -c' \
+		--readFilesIn $(call fastq,$@) --readFilesCommand 'gunzip -c' \
 		--outSAMtype BAM Unsorted --outFileNamePrefix '$(basename $@).'"
 	mv "$(basename $@).Aligned.out.bam" "$(basename $@).bam"
 
-find-fastq_r5=raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(basename $(notdir $1))_R5.fastq.gz
+fastq_r5 = raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(basename $(notdir $1))_R5.fastq.gz
 
-data/mapped/%.bam: $$(call find-fastq_r5,%) ${infected-index}
+data/mapped/%.bam: $$(call fastq_r5,%) ${infected-index}
 	mkdir -p "$(dir $@)"
 	${bsub} -n 6 -M24000 -R'select[mem>24000]' -R'rusage[mem=24000]' \
 		"STAR --runThreadN 6 --genomeDir '$(dir ${infected-index})' \
 		--runMode alignReads --alignEndsType Local \
-		--readFilesIn $(call find-fastq_r5,$@) --readFilesCommand 'gunzip -c' \
+		--readFilesIn $(call fastq_r5,$@) --readFilesCommand 'gunzip -c' \
 		--outSAMtype BAM Unsorted --outFileNamePrefix '$(basename $@).'"
 	mv "$(basename $@).Aligned.out.bam" "$(basename $@).bam"
 
