@@ -1,6 +1,5 @@
-data_dir := data
-ref_dir := ${data_dir}/reference
-index_dir := ${data_dir}/index
+ref_dir := data/reference
+index_dir := data/index
 reference := ${ref_dir}/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa
 viral-reference := ${ref_dir}/orsay-virus.fa
 infected-reference := ${ref_dir}/$(basename $(notdir ${reference}))-orv.fa
@@ -73,14 +72,14 @@ ${infected-index}: ${infected-reference}
 		--genomeDir '$(dir $@)' --genomeFastaFiles '$<'"
 	rm Log.out
 
-mapped-reads := $(foreach f,$(shell ls raw/c_elegans_*/fastq/*_R5.fastq.gz),${data_dir}/mapped/$(subst raw/,,$(subst fastq/,,$(subst _R5.fastq.gz,,$f))).bam)
+mapped-reads := $(foreach f,$(shell ls raw/c_elegans_*/fastq/*_R5.fastq.gz),data/mapped/$(subst raw/,,$(subst fastq/,,$(subst _R5.fastq.gz,,$f))).bam)
 
 .PHONY: mapped-reads
 mapped-reads: ${mapped-reads}
 
 .SECONDEXPANSION:
 
-${data_dir}/mapped-paired-end/%.bam: $$(call find-fastq,%) ${infected-index}
+data/mapped-paired-end/%.bam: $$(call find-fastq,%) ${infected-index}
 	mkdir -p "$(dir $@)"
 	${bsub} -n 6 -M24000 -R'select[mem>24000]' -R'rusage[mem=24000]' \
 		"STAR --runThreadN 6 --genomeDir '$(dir ${infected-index})' \
@@ -91,7 +90,7 @@ ${data_dir}/mapped-paired-end/%.bam: $$(call find-fastq,%) ${infected-index}
 
 find-fastq_r5=raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(basename $(notdir $1))_R5.fastq.gz
 
-${data_dir}/mapped/%.bam: $$(call find-fastq_r5,%) ${infected-index}
+data/mapped/%.bam: $$(call find-fastq_r5,%) ${infected-index}
 	mkdir -p "$(dir $@)"
 	${bsub} -n 6 -M24000 -R'select[mem>24000]' -R'rusage[mem=24000]' \
 		"STAR --runThreadN 6 --genomeDir '$(dir ${infected-index})' \
@@ -108,6 +107,6 @@ find-genes := $(subst /mapped/,/genes/,${mapped-reads:.bam=.tsv})
 .PHONY: find-genes
 find-genes: ${find-genes}
 
-${data_dir}/genes/%.tsv: ${data_dir}/mapped/%.bam ${gene-annotation}
+data/genes/%.tsv: data/mapped/%.bam ${gene-annotation}
 	mkdir -p "$(dir $@)"
 	${bsub} "./scripts/find-mapped-genes '$<' '$@' '${gene-annotation}'"
