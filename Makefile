@@ -5,6 +5,8 @@ viral-reference := ${ref_dir}/orsay-virus.fa
 infected-reference := ${ref_dir}/$(basename $(notdir ${reference}))-orv.fa
 annotation := ${ref_dir}/Caenorhabditis_elegans.WBcel235.84.gtf
 gene-annotation := ${ref_dir}/Caenorhabditis_elegans.WBcel235.84.genes.gtf
+viral-annotation := ${ref_dir}/orsay-virus.gtf
+infected-gene-annotation := ${ref_dir}/Caenorhabditis_elegans.WBcel235.84.genes-orv.gtf
 index := ${index_dir}/Caenorhabditis_elegans/Genome
 viral-index := ${index_dir}/orsay-virus/Genome
 infected-index := ${index_dir}/Caenorhabditis_elegans-orv/Genome
@@ -25,6 +27,7 @@ ${reference}:
 viral-reference: ${viral-reference}
 
 ${viral-reference}: raw/reference/$(notdir ${viral-reference})
+	mkdir -p "$(dir $@)"
 	cp "$<" "$@"
 
 .PHONY: infected-reference
@@ -40,6 +43,13 @@ ${annotation}:
 	mkdir -p "$(dir $@)"
 	wget 'ftp://ftp.ensembl.org/pub/release-84/gtf/caenorhabditis_elegans/Caenorhabditis_elegans.WBcel235.84.gtf.gz' -O $@.gz
 	gunzip $@.gz
+
+.PHONY: viral-annotation
+viral-annotation: ${viral-annotation}
+
+${viral-annotation}: raw/reference/$(notdir ${viral-annotation})
+	mkdir -p "$(dir $@)"
+	cp "$<" "$@"
 
 # Alignment
 
@@ -99,6 +109,9 @@ data/mapped/%.bam: $$(call fastq_r5,%) ${infected-index}
 
 ${gene-annotation}: ${annotation}
 	awk '($$3 == "gene") {print $$0}' '$<' > '$@'
+
+${infected-gene-annotation}: ${gene-annotation} ${viral-annotation}
+	cat $+ > '$@'
 
 find-genes := $(subst /mapped/,/genes/,${mapped-reads:.bam=.tsv})
 
