@@ -16,6 +16,7 @@ sys$run({
     gr = modules::import_package('GenomicRanges')
     dplyr = modules::import_package('dplyr', attach = TRUE)
     bios = modules::import_package('Biostrings')
+    modules::import('klmr/functional/lambda')
 
     genes = io$read_table(args$genes) %>%
         select(ReadID = 1, Gene = 2)
@@ -69,7 +70,6 @@ sys$run({
 
     read_tails = read_tails[substr(read_tails, 1, 1) == 'A']
     tail_runs = lapply(strsplit(read_tails, ''), rle)
-    modules::import('klmr/functional/lambda')
     poly_a_lengths = vapply(tail_runs, x -> x$lengths[1], 0L)
 })
 
