@@ -47,9 +47,9 @@ ${annotation}:
 .PHONY: viral-annotation
 viral-annotation: ${viral-annotation}
 
-${viral-annotation}: raw/reference/$(notdir ${viral-annotation})
+${viral-annotation}: raw/reference/orsay.genome.ape
 	mkdir -p "$(dir $@)"
-	cp "$<" "$@"
+	./scripts/genbank-to-gtf "$<" "$@"
 
 # Alignment
 
