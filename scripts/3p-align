@@ -3,7 +3,7 @@
 sys = modules::import('klmr/sys')
 
 sys$run({
-    args = sys$cmd$parse(opt('r', 'reference', 'reference sequence file (fasta)'),
+    args = sys$cmd$parse(opt('r', 'reference', 'top-level reference sequence file (fasta)'),
                          opt('a', 'annotation', 'gene reference annotation (GTF)'),
                          opt('j', 'ncores', 'number of cores to use', 1L),
                          arg('genes', 'ID–gene name map file'),
