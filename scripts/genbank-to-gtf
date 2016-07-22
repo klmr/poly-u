@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+
+import sys
+from Bio import SeqIO
+from BCBio import GFF
+
+
+def recode_features(annotation, translations):
+    def recode(feature):
+        if feature.type in translations:
+            feature.type = translations[feature.type]
+        return feature
+
+    for seq_record in annotation:
+        seq_record.features = map(recode, seq_record.features)
+        yield seq_record
+
+
+def genbank_to_gtf(in_file, out_file):
+    translations = {'misc_feature': 'protein_coding'}
+
+    with in_file as in_:
+        with out_file as out:
+            writer = GFF.GFF3Writer()
+            writer.write(recode_features(SeqIO.parse(in_, 'gb'), translations), out)
+
+
+class maybe_close:
+    def __init__(self, descriptor, mode):
+        if isinstance(descriptor, str):
+            self.file = open(descriptor, mode)
+            self.close = True
+        else:
+            self.file = descriptor
+            self.close = False
+
+    def __enter__(self):
+        return self.file
+
+    def __exit__(self, type, value, traceback):
+        if self.close:
+            self.file.close()
+
+
+def main():
+    infile = sys.argv[1] if len(sys.argv) > 1 else sys.stdin
+    outfile = sys.argv[2] if len(sys.argv) > 2 else sys.stdout
+
+    genbank_to_gtf(maybe_close(infile, 'r'), maybe_close(outfile, 'w'))
+
+
+if __name__ == '__main__':
+    sys.exit(main())
