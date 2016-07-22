@@ -80,10 +80,6 @@ ${infected-index}: ${infected-reference}
 		--genomeDir '$(dir $@)' --genomeFastaFiles '$<'"
 	rm Log.out
 
-mapped-reads := $(foreach f,$(shell ls raw/c_elegans_*/fastq/*_R5.fastq.gz),data/mapped/$(subst raw/,,$(subst fastq/,,$(subst _R5.fastq.gz,,$f))).bam)
-
-.PHONY: mapped-reads
-mapped-reads: ${mapped-reads}
 raw-reads = $(shell ls raw/c_elegans_??/fastq/*_R?.fastq.gz)
 trimmed-reads = $(filter-out %_R3.fastq.gz,$(subst /fastq/,/,$(subst raw/,data/trimmed/,${raw-reads})))
 
@@ -100,6 +96,11 @@ data/trimmed/%_R5.fastq.gz: $$(call fastq,$$@)
 	fastqc -o data/qc '$@'
 	fastqc -o data/qc '$(subst _R5,_R3,$@)'
 fastq_r5 = raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(basename $(notdir $1))_R5.fastq.gz
+
+mapped-reads = $(subst /trimmed/,/mapped/,$(filter-out %_R3.fastq.gz,${trimmed-reads:_R5.fastq.gz=.bam}))
+
+.PHONY: mapped-reads
+mapped-reads: ${mapped-reads}
 
 data/mapped/%.bam: $$(call fastq_r5,%) ${infected-index}
 	mkdir -p "$(dir $@)"
