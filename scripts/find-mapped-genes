@@ -2,5 +2,5 @@
 input="$1"
 output="$2"
 gene_annotation="$3"
-bedtools intersect -a "$input" -b "$gene_annotation" -bed -f 1 -F 0.5 -s -wb \
+bedtools intersect -a "$input" -b "$gene_annotation" -bed -f 1 -s -wb \
 | awk -v OFS='\t' '{print $4, $22}' | sed 's/"\(.*\)";/\1/' > "$output"
