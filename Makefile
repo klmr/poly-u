@@ -84,6 +84,8 @@ mapped-reads := $(foreach f,$(shell ls raw/c_elegans_*/fastq/*_R5.fastq.gz),data
 
 .PHONY: mapped-reads
 mapped-reads: ${mapped-reads}
+raw-reads = $(shell ls raw/c_elegans_??/fastq/*_R?.fastq.gz)
+trimmed-reads = $(filter-out %_R3.fastq.gz,$(subst /fastq/,/,$(subst raw/,data/trimmed/,${raw-reads})))
 
 .PHONY: trimmed-reads
 trimmed-reads: ${trimmed-reads}
