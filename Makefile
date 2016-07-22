@@ -111,6 +111,14 @@ data/mapped/%.bam: data/trimmed/%_R5.fastq.gz ${infected-index}
 		--outSAMtype BAM Unsorted --outFileNamePrefix '$(basename $@)'"
 	mv "$(basename $@)Aligned.out.bam" "$(basename $@).bam"
 
+.PHONY: qc-report
+## Generate aggregate report from individual tool/QC outputs
+qc-report: data/qc/multiqc_report.html
+
+data/qc/multiqc_report.html: ${trimmed-reads} ${mapped-reads}
+	multiqc --force --outdir data/qc \
+		data/trimmed data/qc data/mapped
+
 ${gene-annotation}: ${annotation}
 	awk '($$3 == "gene") {print $$0}' '$<' > '$@'
 
