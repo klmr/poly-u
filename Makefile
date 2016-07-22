@@ -130,6 +130,6 @@ find-genes := $(subst /mapped/,/genes/,${mapped-reads:.bam=.tsv})
 .PHONY: find-genes
 find-genes: ${find-genes}
 
-data/genes/%.tsv: data/mapped/%.bam ${gene-annotation}
+data/genes/%.tsv: data/mapped/%.bam ${infected-gene-annotation}
 	mkdir -p "$(dir $@)"
-	${bsub} "./scripts/find-mapped-genes '$<' '$@' '${gene-annotation}'"
+	${bsub} "./scripts/find-mapped-genes '$<' '$@' '${infected-gene-annotation}'"
