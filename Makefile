@@ -95,21 +95,20 @@ data/trimmed/%_R5.fastq.gz: $$(call fastq,$$@)
 		--minimum-length 5 -o '$@' -p '$(subst _R5,_R3,$@)' $^"
 	fastqc -o data/qc '$@'
 	fastqc -o data/qc '$(subst _R5,_R3,$@)'
-fastq_r5 = raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(basename $(notdir $1))_R5.fastq.gz
 
 mapped-reads = $(subst /trimmed/,/mapped/,$(filter-out %_R3.fastq.gz,${trimmed-reads:_R5.fastq.gz=.bam}))
 
 .PHONY: mapped-reads
 mapped-reads: ${mapped-reads}
 
-data/mapped/%.bam: $$(call fastq_r5,%) ${infected-index}
+data/mapped/%.bam: data/trimmed/%_R5.fastq.gz ${infected-index}
 	mkdir -p "$(dir $@)"
 	${bsub} -n 6 -M24000 -R'select[mem>24000]' -R'rusage[mem=24000]' \
 		"STAR --runThreadN 6 --genomeDir '$(dir ${infected-index})' \
 		--runMode alignReads --alignEndsType Local \
-		--readFilesIn $(call fastq_r5,$@) --readFilesCommand 'gunzip -c' \
-		--outSAMtype BAM Unsorted --outFileNamePrefix '$(basename $@).'"
-	mv "$(basename $@).Aligned.out.bam" "$(basename $@).bam"
+		--readFilesIn $< --readFilesCommand 'gunzip -c' \
+		--outSAMtype BAM Unsorted --outFileNamePrefix '$(basename $@)'"
+	mv "$(basename $@)Aligned.out.bam" "$(basename $@).bam"
 
 ${gene-annotation}: ${annotation}
 	awk '($$3 == "gene") {print $$0}' '$<' > '$@'
