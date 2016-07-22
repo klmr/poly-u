@@ -11,7 +11,7 @@ index := ${index_dir}/Caenorhabditis_elegans/Genome
 viral-index := ${index_dir}/orsay-virus/Genome
 infected-index := ${index_dir}/Caenorhabditis_elegans-orv/Genome
 
-fastq = $(foreach r,R5 R3,raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(basename $(notdir $1))_$r.fastq.gz)
+fastq = $(foreach r,R5 R3,raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(notdir $(subst _R5,_$r,$1)))
 
 bsub := scripts/bsub -K -q research-rh7
 
