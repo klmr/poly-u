@@ -43,7 +43,21 @@ sys$run({
 
     flank_3p_annotation = gr$resize(gr$flank(annotation, 200, FALSE),
                                     200 + gr$width(reads_3p))
-    flank_3p_seq = sam$getSeq(sam$FaFile(args$reference), flank_3p_annotation)
+    reference = sam$FaFile(args$reference)
+    seqlengths = GenomeInfoDb::seqlengths(reference)
+
+    constrain = function (annotation, lengths) {
+        # Necessary because `gr$start(annotation) = …` doesn’t work:
+        # “invalid function in complex assignment”
+        modules::import_package('GenomicRanges', attach = TRUE)
+        start(annotation) = pmax(0, start(annotation))
+        lengths = lengths[as.character(gr$seqnames(annotation))]
+        end(annotation) = pmin(end(annotation), lengths)
+        annotation
+    }
+
+    flank_3p_annotation = constrain(flank_3p_annotation, seqlengths)
+    flank_3p_seq = sam$getSeq(reference, flank_3p_annotation)
 
     mat = bios$nucleotideSubstitutionMatrix(match = 1, mismatch = -4, baseOnly = TRUE)
 
