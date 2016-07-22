@@ -103,8 +103,8 @@ mapped-reads: ${mapped-reads}
 
 data/mapped/%.bam: data/trimmed/%_R5.fastq.gz ${infected-index}
 	mkdir -p "$(dir $@)"
-	${bsub} -n 6 -M24000 -R'select[mem>24000]' -R'rusage[mem=24000]' \
-		"STAR --runThreadN 6 --genomeDir '$(dir ${infected-index})' \
+	${bsub} -n 12 -M24000 -R'select[mem>24000]' -R'rusage[mem=24000]' \
+		"STAR --runThreadN 12 --genomeDir '$(dir ${infected-index})' \
 		--runMode alignReads --alignEndsType Local \
 		--outFilterMultimapNmax 100 \
 		--readFilesIn $< --readFilesCommand 'gunzip -c' \
