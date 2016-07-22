@@ -85,8 +85,18 @@ mapped-reads := $(foreach f,$(shell ls raw/c_elegans_*/fastq/*_R5.fastq.gz),data
 .PHONY: mapped-reads
 mapped-reads: ${mapped-reads}
 
+.PHONY: trimmed-reads
+trimmed-reads: ${trimmed-reads}
+
 .SECONDEXPANSION:
 
+data/trimmed/%_R5.fastq.gz: $$(call fastq,$$@)
+	mkdir -p data/qc
+	mkdir -p "$(dir $@)"
+	${bsub} "cutadapt -a TGGAATTCTCGG -A TGGAATTCTCGG -G GTTCAGAGTTCTACAGTCCGACGATC \
+		--minimum-length 5 -o '$@' -p '$(subst _R5,_R3,$@)' $^"
+	fastqc -o data/qc '$@'
+	fastqc -o data/qc '$(subst _R5,_R3,$@)'
 fastq_r5 = raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(basename $(notdir $1))_R5.fastq.gz
 
 data/mapped/%.bam: $$(call fastq_r5,%) ${infected-index}
