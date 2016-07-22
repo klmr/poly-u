@@ -59,7 +59,7 @@ sys$run({
     flank_3p_annotation = constrain(flank_3p_annotation, seqlengths)
     flank_3p_seq = sam$getSeq(reference, flank_3p_annotation)
 
-    mat = bios$nucleotideSubstitutionMatrix(match = 1, mismatch = -4, baseOnly = TRUE)
+    mat = bios$nucleotideSubstitutionMatrix(match = 1, mismatch = -4)
 
     alignments = bios$pairwiseAlignment(reads_3p, flank_3p_seq, type = 'local',
                                         substitutionMatrix = mat,
