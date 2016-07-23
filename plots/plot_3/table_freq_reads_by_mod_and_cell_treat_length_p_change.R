@@ -1,8 +1,8 @@
 library(dplyr)
 library(tidyr)
 
-setwd("/Users/marcos/Desktop/tailseq_celegans/plots/plot_3/scripts")
-reads <- read.csv("../../sample_table.csv")
+setwd("/Users/Marcos/Dropbox/Lab/shared/collaborations/tailseq_celegans/poly-u/plots/")
+reads <- read.csv("../../plots/sample_table.csv")
 
 reads$short    <- ifelse(reads$palen <= 30, "yes", "no")
 rm(reads_filt_mrna_sample)
@@ -76,5 +76,5 @@ reads_stats     <- summarise(group_by(reads_summary, cell, treatment, short, mod
 
 reads_summary <- full_join(reads_summary, reads_stats, by= c("cell", "treatment", "mod", "short"))
 
-write.csv(reads_summary, file = "../data/freq_reads_points_by_mod_and_cell_treat_length_p_change.csv")
+write.csv(reads_summary, file = "../../plots/plot_3/data/freq_reads_points_by_mod_and_cell_treat_length_p_change.csv")
 

@@ -1,10 +1,8 @@
 library(dplyr)
 library(tidyr)
 
-setwd("/Users/marcos/Desktop/tailseq_celegans/plots/plot_3/scripts")
-reads <- read.csv("../../sample_table.csv")
-
-setwd("/Users/marcos/Desktop/tailseq_celegans/plots/plot_3/scripts")
+setwd("/Users/Marcos/Dropbox/Lab/shared/collaborations/tailseq_celegans/poly-u/plots/")
+reads <- read.csv("../../plots/sample_table.csv")
 
 
 reads           <- reads_filt_mrna[, c("mod","cell","treatment","sample")]
@@ -79,5 +77,5 @@ reads_stats   <- reads_stats[,!(names(reads_stats) %in% c("frequencies"))]
 
 reads_summary <- full_join(reads_summary, reads_stats, by= c("cell", "treatment", "mod"))
 
-write.csv(reads_summary, file = "../data/freq_reads_points_by_mod_and_cell_treat_p_change.csv")
+write.csv(reads_summary, file = "../../plots/plot_3/data/freq_reads_points_by_mod_and_cell_treat_p_change.csv")
 
