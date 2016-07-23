@@ -1,6 +1,6 @@
 #Set working directory
-setwd("/Users/marcos/Desktop/tailseq_celegans/plots/plot_1/scripts")
-reads <- read.csv("../../sample_table.csv")
+setwd("/Users/Marcos/Dropbox/Lab/shared/collaborations/tailseq_celegans/poly-u/plots/")
+reads <- read.csv("../../plots/sample_table.csv")
 
 library(dplyr)                                   #load libraries for data wrangling and ploting
 library(tidyr)
@@ -39,22 +39,22 @@ doGraph <- function(cells, colors){
 
 graph1 <- doGraph(c("liver", "bm", "mefs", "escs"), gray(c(0.2,0.4,0.6,0.8)))
 graph1 
-ggsave("../results/density_read_by_length_and_cell_not_pachy.pdf", graph1, width=2.5, height=2.0)
+ggsave("../../plots/plot_1/results/density_read_by_length_and_cell_not_pachy.pdf", graph1, width=2.5, height=2.0)
 rm(graph1)
 
 graph1 <- doGraph(c("pachy","liver", "bm", "mefs", "escs"), c("red", gray(c(0.2,0.4,0.6,0.8))))
 graph1 
-ggsave("../results/density_read_by_length_and_cell_pachy.pdf", graph1, width=2.8, height=2.2)
+ggsave("../../plots/plot_1/results/density_read_by_length_and_cell_pachy.pdf", graph1, width=2.8, height=2.2)
 rm(graph1)
 
 graph1 <- doGraph(c("gv"), c("red"))
 graph1 
-ggsave("../results/density_read_by_length_and_cell_gv.pdf", graph1, width=2.7, height=2.7)
+ggsave("../../plots/plot_1/results/density_read_by_length_and_cell_gv.pdf", graph1, width=2.7, height=2.7)
 rm(graph1)
 
 graph1 <- doGraph(c("gv", "pachy","liver", "bm", "mefs", "escs"), c("red", "green4", gray(c(0.2,0.3,0.4,0.6,0.8))))
 graph1 
-ggsave("../results/density_read_by_length_and_cell_all.pdf", graph1, width=3.2, height=2.7)
+ggsave("../../plots/plot_1/results/density_read_by_length_and_cell_all.pdf", graph1, width=3.2, height=2.7)
 rm(graph1)
 
 
