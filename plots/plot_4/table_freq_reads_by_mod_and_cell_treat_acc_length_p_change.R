@@ -1,7 +1,7 @@
 library(dplyr)
 library(tidyr)
 
-setwd("/Users/marcos/Desktop/tailseq_celegans/plots/plot_4/scripts")
+setwd("/Users/Marcos/Dropbox/Lab/shared/collaborations/tailseq_celegans/poly-u/plots/../../plots/plot_4/scripts/")
 reads <- read.csv("../../sample_table.csv")
 
 reads           <- reads_filt_mrna[, c("mod","cell","treatment","sample", "palen", "pachy")]

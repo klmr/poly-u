@@ -1,7 +1,6 @@
 #Set working directory
-setwd("/Volumes/Promise_Pegasus/marcos_dropbox/Dropbox/Lab/Marcos_files/Scripts_Data/scripts/tail_seq/cambridge_first_week_2016/TAIL-Seq_graphs/all/data/")
 
-setwd("/Users/marcos/Desktop/tailseq_celegans/plots/plot_4/data/")
+setwd("/Users/Marcos/Dropbox/Lab/shared/collaborations/tailseq_celegans/poly-u/plots/../../plots/plot_4/scripts/")
 
 library(dplyr)                                   #load libraries for data wrangling and ploting
 library(tidyr)
