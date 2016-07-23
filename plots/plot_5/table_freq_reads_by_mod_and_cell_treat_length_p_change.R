@@ -1,7 +1,7 @@
 library(dplyr)
 library(tidyr)
 
-setwd("/Users/marcos/Desktop/tailseq_celegans/plots/plot_5/data/")
+setwd("/Users/Marcos/Dropbox/Lab/shared/collaborations/tailseq_celegans/poly-u/plots/../../plots/plot_5/data/")
 
 reads           <- read.csv("All miRNA modifications.csv", header = TRUE, row.names=NULL, sep = ";")
 reads$Frequency <- as.numeric(gsub(",", ".", as.vector(reads$Frequency)))

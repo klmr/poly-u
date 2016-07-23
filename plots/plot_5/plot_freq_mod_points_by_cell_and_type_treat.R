@@ -1,6 +1,6 @@
 #Set working directory
 
-setwd("/Users/marcos/Desktop/tailseq_celegans/plots/plot_5/data/")
+setwd("/Users/Marcos/Dropbox/Lab/shared/collaborations/tailseq_celegans/poly-u/plots/../../plots/plot_5/data/")
 
 library(dplyr)                                   #load libraries for data wrangling and ploting
 library(tidyr)
