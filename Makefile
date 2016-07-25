@@ -1,3 +1,4 @@
+SHELL := $(shell which bash)
 ref_dir := data/reference
 index_dir := data/index
 reference := ${ref_dir}/Caenorhabditis_elegans.WBcel235.dna.toplevel.fa
@@ -144,3 +145,20 @@ trimmed-fastq_r3 = $(subst /genes/,/trimmed/,${1:.tsv=_R3.fastq.gz})
 data/taginfo/intermediate/%.tsv: data/genes/%.tsv ${infected-reference} ${infected-gene-annotation}
 	mkdir -p "$(dir $@)"
 	${bsub} "./scripts/3p-align --reference ${infected-reference} --annotation ${infected-gene-annotation} $< $(call trimmed-fastq_r3,$<) > $@"
+
+taginfo = $(subst /genes/,/taginfo/,${find-genes})
+
+.PHONY: taginfo
+taginfo: ${taginfo}
+
+find-taginfo = raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/taginfo/$(notdir $1).txt.gz
+
+data/taginfo/%.tsv: data/genes/%.tsv $$(call find-taginfo,%)
+	mkdir -p "$(dir $@)"
+	./scripts/merge-taginfo --genes $(firstword $+) --taginfo <(gunzip -c $(lastword $+)) > "$@"
+
+.PHONY: merged-taginfo
+merged-taginfo: data/taginfo/all-taginfo.tsv
+
+data/taginfo/all-taginfo.tsv: ${taginfo}
+	cat $+ > "$@"
