@@ -29,6 +29,7 @@ sys$run({
     merged = inner_join(genes, taginfo, by = c(Tile = 'Tile', TrimmedID = 'TrimmedID'))
 
     for_output = merged %>%
+        filter(`pA length` > 0) %>%
         select(Support, palen = `pA length`, mod = Mod, gene = Gene) %>%
         mutate(filename = tools::file_path_sans_ext(basename(args$gene))) %>%
         extract(filename, c('type', 'treatment', 'sample'),
