@@ -161,4 +161,5 @@ data/taginfo/%.tsv: data/genes/%.tsv $$(call find-taginfo,%)
 merged-taginfo: data/taginfo/all-taginfo.tsv
 
 data/taginfo/all-taginfo.tsv: ${taginfo}
-	cat $+ > "$@"
+	head -n 1 "$<" > "$@"
+	tail -q -n +2 $+ >> "$@"
