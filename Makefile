@@ -155,7 +155,7 @@ find-taginfo = raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/taginfo/$
 
 data/taginfo/%.tsv: data/genes/%.tsv $$(call find-taginfo,%)
 	mkdir -p "$(dir $@)"
-	./scripts/merge-taginfo --genes $(firstword $+) --taginfo <(gunzip -c $(lastword $+)) > "$@"
+	./scripts/merge-taginfo --genes "$(firstword $+)" --taginfo "$(lastword $+)" > "$@"
 
 .PHONY: merged-taginfo
 merged-taginfo: data/taginfo/all-taginfo.tsv

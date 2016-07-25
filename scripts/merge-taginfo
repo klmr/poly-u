@@ -6,7 +6,7 @@ sys = modules::import('klmr/sys')
 
 sys$run({
     args = sys$cmd$parse(opt('g', 'genes', 'ID–gene name map file'),
-                         opt('t', 'taginfo', 'tailseeker taginfo file (unzipped)'))
+                         opt('t', 'taginfo', 'tailseeker taginfo file'))
 
     io = modules::import('ebi-predocs/ebits/io')
     dplyr = modules::import_package('dplyr', attach = TRUE)
@@ -16,6 +16,11 @@ sys$run({
     genes = io$read_table(args$genes) %>%
         select(ReadID = 1, Gene = 2) %>%
         extract(ReadID, c('Tile', 'TrimmedID'), '^([^:]+):0*(\\d+)', convert = TRUE)
+
+    if (tools::file_ext(args$taginfo) == 'gz') {
+        args$taginfo = gzfile(args$taginfo, 'r')
+        on.exit(close(args$taginfo))
+    }
 
     taginfo = io$read_table(args$taginfo, sep = '\t') %>%
         select(Tile = 1, TrimmedID = 2, `pA length` = 4, Mod = 5, `Support` = 6) %>%
