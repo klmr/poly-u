@@ -1,0 +1,35 @@
+#!/usr/bin/env Rscript
+
+sys = modules::import('klmr/sys')
+
+"Merge a gene–ID mapping with the corresponding tailseeker taginfo file."
+
+sys$run({
+    args = sys$cmd$parse(opt('g', 'genes', 'ID–gene name map file'),
+                         opt('t', 'taginfo', 'tailseeker taginfo file (unzipped)'))
+
+    io = modules::import('ebi-predocs/ebits/io')
+    dplyr = modules::import_package('dplyr', attach = TRUE)
+    tidyr = modules::import_package('tidyr', attach = TRUE)
+    modules::import('klmr/functional/lambda')
+
+    genes = io$read_table(args$genes) %>%
+        select(ReadID = 1, Gene = 2) %>%
+        extract(ReadID, c('Tile', 'TrimmedID'), '^([^:]+):0*(\\d+)', convert = TRUE)
+
+    taginfo = io$read_table(args$taginfo, sep = '\t') %>%
+        select(Tile = 1, TrimmedID = 2, `pA length` = 4, Mod = 5, `Support` = 6) %>%
+        mutate(Mod = ifelse(is.na(Mod), '', Mod))
+
+    merged = inner_join(genes, taginfo, by = c(Tile = 'Tile', TrimmedID = 'TrimmedID'))
+
+    for_output = merged %>%
+        select(Support, palen = `pA length`, mod = Mod, gene = Gene) %>%
+        mutate(filename = tools::file_path_sans_ext(basename(args$gene))) %>%
+        extract(filename, c('type', 'treatment', 'sample'),
+                '([^_]+)_(.*)(\\d+)$')
+
+    write.table(for_output, file = stdout(), quote = FALSE, sep = '\t', row.names = FALSE)
+})
+
+# vim: ft=r
