@@ -17,7 +17,7 @@ sys$run({
         aes(x = palen, y = ..density..) +
         geom_freqpoly(aes(color = paste(type, treatment)), binwidth = 6) +
         scale_x_continuous(limits = c(0, 85), expand = c(0, 0)) +
-        labs(x = 'poly-A length', y = 'Density', color = 'Condition')
+        labs(x = 'poly-A length', y = 'Density of reads', color = 'Condition')
 })
 
 # vim: ft=r
