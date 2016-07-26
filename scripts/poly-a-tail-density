@@ -10,10 +10,9 @@ sys$run({
 
     taginfo = io$read_table(args$taginfo, header = TRUE)
 
-    # pA cumulative density
-
     modules::import_package('ggplot2', attach = TRUE)
 
+    #+ pA-cumulative-density
     ggplot(taginfo) +
         aes(x = palen, y = ..density..) +
         geom_freqpoly(aes(color = paste(type, treatment)), binwidth = 6) +
