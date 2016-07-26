@@ -16,9 +16,8 @@ sys$run({
 
     ggplot(taginfo) +
         aes(x = palen, y = ..density..) +
-        geom_freqpoly(aes(color = treatment, linetype = type), binwidth = 6) +
-        scale_x_continuous(limits = c(0, 100), expand = c(0, 0)) +
-        coord_cartesian(xlim = c(0,80))
+        geom_freqpoly(aes(color = paste(type, treatment)), binwidth = 6) +
+        scale_x_continuous(limits = c(0, 85), expand = c(0, 0))
 })
 
 # vim: ft=r
