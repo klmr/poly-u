@@ -12,7 +12,7 @@ sys$run({
 
     modules::import_package('ggplot2', attach = TRUE)
 
-    #+ pA-cumulative-density
+    #+ pA-density
     ggplot(taginfo) +
         aes(x = palen, y = ..density..) +
         geom_freqpoly(aes(color = paste(type, treatment)), binwidth = 6) +
