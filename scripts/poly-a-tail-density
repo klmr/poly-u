@@ -12,12 +12,17 @@ sys$run({
 
     modules::import_package('ggplot2', attach = TRUE)
 
-    #+ pA-density
-    ggplot(taginfo) +
-        aes(x = palen, y = ..density.., color = paste(type, treatment)) +
+    pa_density_plot = ggplot() +
+        aes(x = palen, y = ..density..) +
         geom_freqpoly(binwidth = 6) +
         scale_x_continuous(limits = c(0, 85), expand = c(0, 0)) +
-        labs(x = 'poly-A length', y = 'Density of reads', color = 'Condition')
+        labs(x = 'poly-A length', y = 'Density of reads')
+
+    #+ pA-density
+    pa_density_plot %+%
+        taginfo +
+        aes(color = paste(type, treatment)) +
+        labs(color = 'Condition')
 })
 
 # vim: ft=r
