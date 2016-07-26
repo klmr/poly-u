@@ -10,16 +10,6 @@ sys$run({
 
     taginfo = io$read_table(args$taginfo, header = TRUE)
 
-    pa_density = taginfo %>%
-        group_by(type, treatment, palen) %>%
-        summarize(n = n())
-
-    # As a heatmap (“gel”)
-
-    ggplot(pa_density) +
-        aes(x = paste(type, treatment), y = palen) +
-        geom_tile(aes(fill = log(n)))
-
     # pA cumulative density
 
     modules::import_package('ggplot2', attach = TRUE)
