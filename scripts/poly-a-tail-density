@@ -17,7 +17,7 @@ sys$run({
         aes(x = palen, y = ..density..) +
         geom_freqpoly(binwidth = 6) +
         scale_x_continuous(limits = c(0, 85), expand = c(0, 0)) +
-        labs(x = 'poly-A length', y = 'Density of reads')
+        labs(x = 'poly-A length', y = 'Density of reads (arb. unit)')
 
     #+ pA-density
     pa_density_plot %+%
