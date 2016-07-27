@@ -21,11 +21,13 @@ sys$run({
         scale_x_continuous(limits = c(0, 85), expand = c(0, 0)) +
         labs(x = 'poly-A length', y = 'Density of reads (arb. unit)')
 
-    #+ pA-density-host
+    #+ pa-density-host
     pa_density_plot %+%
         filter(taginfo, `RNA source` == 'host') +
         aes(color = paste(type, treatment)) +
         labs(color = 'Condition')
+
+    ggsave('data/plots/pA-density-host.pdf')
 
     #+ viral-pa-density
     darken = function (cols, factor = 2)
@@ -44,6 +46,8 @@ sys$run({
         aes(color = `RNA source`, linetype = type) +
         scale_color_manual(values = viral_colors) +
         labs(color = 'RNA source', linetype = 'Type')
+
+    ggsave('data/plots/viral-pa-density.pdf')
 })
 
 # vim: ft=r
