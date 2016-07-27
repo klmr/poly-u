@@ -32,17 +32,18 @@ sys$run({
         rgb(t(col2rgb(cols) / factor), maxColorValue = 255)
 
     viral_colors = data_frame(`RNA source` = relevel(factor(unique(taginfo$`RNA source`)), 'host'),
-                              Color1 = c('gray', 'chocolate3', 'cadetblue3')) %>%
-        mutate(Color2 = darken(Color1, 1.5)) %>%
-        tidyr$gather(sample, Color, -`RNA source`) %>%
-        mutate(sample = as.integer(gsub('Color', '', sample))) %>%
-        {setNames(.$Color, paste(.$`RNA source`, .$sample))}
+                              WT = c('gray', 'chocolate3', 'cadetblue3')) %>%
+        mutate(KO = darken(WT, 1.5)) %>%
+        mutate(None = WT) %>%
+        tidyr$gather(type, Color, -`RNA source`) %>%
+        {setNames(.$Color, paste(.$type, .$`RNA source`))} %>%
+        setNames(gsub('None ', '', names(.)))
 
     pa_density_plot %+%
         filter(taginfo, treatment == 'Infected') +
-        aes(color = paste(`RNA source`, sample)) +
+        aes(color = `RNA source`, linetype = type) +
         scale_color_manual(values = viral_colors) +
-        labs(color = 'RNA source')
+        labs(color = 'RNA source', linetype = 'Type')
 })
 
 # vim: ft=r
