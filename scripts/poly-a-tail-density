@@ -57,6 +57,32 @@ sys$run({
         labs(color = 'RNA source', linetype = 'Infection status')
 
     ggsave('data/plots/viral-infected-uninfected.pdf')
+
+    #+ modifications
+
+    # The first version of this used `rle`, but was much too slow and memory
+    # intensive.
+    modifications = function(seq) {
+        first_length = function (str) {
+            if (is.na(str) || ! nzchar(str))
+                return(0L)
+
+            first_char = substr(str, 1L, 1L)
+            pos = 2L
+            while (substr(str, pos, pos) == first_char) {
+                pos = pos + 1L
+            }
+            pos - 1L
+        }
+
+        data_frame(ModLength = vapply(seq, first_length, integer(1)),
+                   Mod = substr(seq, 1L, 1L))
+    }
+
+    taginfo = taginfo %>%
+        do(modifications(.$mod)) %>%
+        bind_cols(taginfo, .) %>%
+        select(-mod)
 })
 
 # vim: ft=r
