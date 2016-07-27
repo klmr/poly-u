@@ -9,7 +9,8 @@ sys$run({
     modules::import_package('dplyr', attach = TRUE)
     tidyr = modules::import_package('tidyr')
 
-    taginfo = io$read_table(args$taginfo, header = TRUE)
+    taginfo = io$read_table(args$taginfo, header = TRUE) %>%
+        mutate(`RNA source` = ifelse(grepl('ORV', gene, fixed = TRUE), gene, 'host'))
 
     modules::import_package('ggplot2', attach = TRUE)
 
