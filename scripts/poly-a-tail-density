@@ -48,6 +48,15 @@ sys$run({
         labs(color = 'RNA source', linetype = 'Type')
 
     ggsave('data/plots/viral-pa-density.pdf')
+
+    #+ viral-infected-uninfected
+    pa_density_plot %+%
+        taginfo +
+        aes(color = `RNA source`, linetype = treatment) +
+        scale_color_manual(values = viral_colors) +
+        labs(color = 'RNA source', linetype = 'Infection status')
+
+    ggsave('data/plots/viral-infected-uninfected.pdf')
 })
 
 # vim: ft=r
