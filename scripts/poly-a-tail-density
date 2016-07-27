@@ -7,6 +7,7 @@ sys$run({
 
     io = modules::import('ebi-predocs/ebits/io')
     modules::import_package('dplyr', attach = TRUE)
+    tidyr = modules::import_package('tidyr')
 
     taginfo = io$read_table(args$taginfo, header = TRUE)
 
@@ -29,9 +30,21 @@ sys$run({
         filter(treatment == 'Uninfected') %>%
         mutate(`RNA source` = ifelse(grepl('ORV', gene, fixed = TRUE), gene, 'host'))
 
+    darken = function (cols, factor = 2)
+        rgb(t(col2rgb(cols) / factor), maxColorValue = 255)
+
+    viral_colors = data_frame(`RNA source` = relevel(factor(unique(viral_taginfo$`RNA source`)), 'host'),
+                              Color1 = c('gray', 'chocolate3', 'cadetblue3')) %>%
+        mutate(Color2 = darken(Color1, 1.5)) %>%
+        tidyr$gather(sample, Color, -`RNA source`) %>%
+        mutate(sample = as.integer(gsub('Color', '', sample))) %>%
+        {setNames(.$Color, paste(.$`RNA source`, .$sample))}
+
     pa_density_plot %+%
         viral_taginfo +
-        aes(color = `RNA source`)
+        aes(color = paste(`RNA source`, sample)) +
+        scale_color_manual(values = viral_colors) +
+        labs(color = 'RNA source')
 })
 
 # vim: ft=r
