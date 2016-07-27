@@ -23,6 +23,15 @@ sys$run({
         taginfo +
         aes(color = paste(type, treatment)) +
         labs(color = 'Condition')
+
+    #+ viral-pa-density
+    viral_taginfo = taginfo %>%
+        filter(treatment == 'Uninfected') %>%
+        mutate(`RNA source` = ifelse(grepl('ORV', gene, fixed = TRUE), gene, 'host'))
+
+    pa_density_plot %+%
+        viral_taginfo +
+        aes(color = `RNA source`)
 })
 
 # vim: ft=r
