@@ -144,7 +144,10 @@ trimmed-fastq_r3 = $(subst /genes/,/trimmed/,${1:.tsv=_R3.fastq.gz})
 
 data/taginfo/aligned/%.tsv: data/genes/%.tsv ${infected-reference} ${infected-gene-annotation}
 	mkdir -p "$(dir $@)"
-	${bsub} "./scripts/3p-align --reference ${infected-reference} --annotation ${infected-gene-annotation} $< $(call trimmed-fastq_r3,$<) > $@"
+	${bsub} -n 16 -M 24000 -R 'span[hosts=1] select[mem>24000] rusage[mem=24000]' \
+		"./scripts/3p-align --reference '${infected-reference}' \
+		--annotation '${infected-gene-annotation}' \
+		'$<' '$(call trimmed-fastq_r3,$<)' > '$@'"
 
 taginfo = $(subst /genes/,/taginfo/,${find-genes})
 
