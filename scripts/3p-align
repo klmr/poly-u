@@ -2,6 +2,29 @@
 
 sys = modules::import('klmr/sys')
 
+# Equivalent to `mpi.collate.pairwiseAlignment`, cf. [1], with some fixes.
+# [1]: https://github.com/genome-vendor/r-bioc-biostrings/blob/bb531fe42544beb2c5f5f4a41985ee4023553136/R/pairwiseAlignment.R#L300-L316
+mc_collate = function (results, pattern, subject) {
+    value = results[[1]]
+    value@score = unlist(lapply(results, bios$score))
+
+    lapply = {...} -> unname(base::lapply(...))
+
+    value@pattern@unaligned@pool = pattern@pool
+    value@pattern@unaligned@ranges = pattern@ranges
+    value@pattern@range = do.call(c, lapply(results, x -> x@pattern@range))
+    value@pattern@mismatch = do.call(c, lapply(results, x -> x@pattern@mismatch))
+    value@pattern@indel =  do.call(c, lapply(results, x -> x@pattern@indel))
+
+    value@subject@unaligned@pool = subject@pool
+    value@subject@unaligned@ranges = subject@ranges
+    value@subject@range = do.call(c, lapply(results, x -> x@subject@range))
+    value@subject@mismatch = do.call(c, lapply(results, x -> x@subject@mismatch))
+    value@subject@indel = do.call(c, lapply(results, x -> x@subject@indel))
+
+    value
+}
+
 sys$run({
     args = sys$cmd$parse(opt('r', 'reference', 'top-level reference sequence file (fasta)'),
                          opt('a', 'annotation', 'gene reference annotation (GTF)'),
@@ -60,9 +83,24 @@ sys$run({
 
     mat = bios$nucleotideSubstitutionMatrix(match = 1, mismatch = -4)
 
-    alignments = bios$pairwiseAlignment(reads_3p, flank_3p_seq, type = 'local',
-                                        substitutionMatrix = mat,
-                                        gapOpening = 20, gapExtension = 20)
+    # Multicore setup.
+    indices = seq_along(reads_3p)
+    segments = split(indices, cut(indices, args$ncores, labels = FALSE))
+
+    do_alignment = function (indices) {
+        bios$pairwiseAlignment(reads_3p[indices],
+                               flank_3p_seq[indices],
+                               type = 'local',
+                               substitutionMatrix = mat,
+                               gapOpening = 20, gapExtension = 20)
+    }
+
+    # FIXME: Doesn’t work yet (klmr/modules#62)
+    # modules::import_package('parallel', attach = 'mclapply')
+    mclapply = modules::import_package('parallel')$mclapply
+
+    alignments = mclapply(segments, do_alignment, mc.cores = args$ncores) %>%
+        mc_collate(reads_3p, flank_3p_seq)
 
     # Proper alignments that are anchored at 3ʹ must end after the end of the
     # gene (i.e. at position >= read_length) because otherwise they end within
