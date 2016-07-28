@@ -50,7 +50,7 @@ sys$run({
         # Necessary because `gr$start(annotation) = …` doesn’t work:
         # “invalid function in complex assignment”
         modules::import_package('GenomicRanges', attach = TRUE)
-        start(annotation) = pmax(0, start(annotation))
+        start(annotation) = pmax(1L, start(annotation))
         lengths = lengths[as.character(gr$seqnames(annotation))]
         end(annotation) = pmin(end(annotation), lengths)
         annotation
