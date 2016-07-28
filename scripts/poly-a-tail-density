@@ -45,6 +45,7 @@ sys$run({
         filter(taginfo, Treatment == 'Infected') +
         aes(color = `RNA source`, linetype = Type) +
         scale_color_manual(values = viral_colors) +
+        coord_cartesian(ylim = c(0, 0.05)) +
         labs(color = 'RNA source', linetype = 'Type')
 
     ggsave('data/plots/viral-pa-density.pdf')
@@ -54,6 +55,7 @@ sys$run({
         taginfo +
         aes(color = `RNA source`, linetype = Treatment) +
         scale_color_manual(values = viral_colors) +
+        coord_cartesian(ylim = c(0, 0.05)) +
         labs(color = 'RNA source', linetype = 'Infection status')
 
     ggsave('data/plots/viral-infected-uninfected.pdf')
