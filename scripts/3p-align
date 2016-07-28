@@ -23,8 +23,7 @@ sys$run({
 
     # Load 3ʹ reads for which 5ʹ reads are mapped successfully.
     seq_3p = sr$readFastq(args$fastq)
-    matching_3p = match(genes$ReadID, as.character(sr$id(seq_3p)))
-    seq_3p = seq_3p[matching_3p]
+    seq_3p = seq_3p[match(genes$ReadID, as.character(sr$id(seq_3p)))]
 
     # Load annotation of genes with corresponding 5ʹ reads.
     annotation = rtl$import(args$annotation)
