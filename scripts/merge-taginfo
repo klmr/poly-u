@@ -32,9 +32,9 @@ sys$run({
 
     for_output = merged %>%
         filter(`pA length` > 0) %>%
-        select(Support, palen = `pA length`, mod = Mod, gene = Gene) %>%
+        select(Support, `pA length`, Mod, Gene) %>%
         mutate(filename = tools::file_path_sans_ext(basename(args$gene))) %>%
-        extract(filename, c('type', 'treatment', 'sample'),
+        extract(filename, c('Type', 'Treatment', 'Sample'),
                 '([^_]+)_(.*)(\\d+)$')
 
     write.table(for_output, file = stdout(), quote = FALSE, sep = '\t', row.names = FALSE)
