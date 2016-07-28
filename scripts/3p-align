@@ -131,8 +131,7 @@ sys$run({
                         `pA length` = poly_a_lengths,
                         Mod = modifications)
 
-    write.table(result, file = stdout(),
-                quote = FALSE, sep = '\t', row.names = FALSE)
+    io$write_table(result, file = stdout(), sep = '\t')
 })
 
 # vim: ft=r
