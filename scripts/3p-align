@@ -29,14 +29,13 @@ sys$run({
     # Load annotation of genes with corresponding 5ʹ reads.
     annotation = rtl$import(args$annotation)
     # Ensure only gene annotations are loaded …
-    meta = {} -> gr$elementMetadata(annotation)
-    annotation = annotation[meta()$type == 'gene']
-    annotation = annotation[match(genes$Gene, meta()$gene_id)]
+    annotation = annotation[annotation$type == 'gene']
+    annotation = annotation[match(genes$Gene, annotation$gene_id)]
 
     stopifnot(length(annotation) == length(seq_3p))
 
     # Filter non-interesting reads.
-    protein_coding = meta()$gene_biotype == 'protein_coding'
+    protein_coding = annotation$gene_biotype == 'protein_coding'
     annotation = annotation[protein_coding]
     seq_3p = seq_3p[protein_coding]
     reads_3p = bios$reverseComplement(sr$sread(seq_3p))
