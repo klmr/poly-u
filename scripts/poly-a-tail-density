@@ -10,13 +10,13 @@ sys$run({
     tidyr = modules::import_package('tidyr')
 
     taginfo = io$read_table(args$taginfo, header = TRUE) %>%
-        mutate(`RNA source` = ifelse(grepl('ORV', gene, fixed = TRUE), gene, 'host'))
+        mutate(`RNA source` = ifelse(grepl('ORV', Gene, fixed = TRUE), Gene, 'host'))
 
     modules::import_package('ggplot2', attach = TRUE)
 
     pa_density_plot = ggplot() +
         theme_bw() +
-        aes(x = palen, y = ..density..) +
+        aes(x = `pA length`, y = ..density..) +
         geom_freqpoly(binwidth = 6, size = 1) +
         scale_x_continuous(limits = c(0, 85), expand = c(0, 0)) +
         labs(x = 'poly-A length', y = 'Density of reads (arb. unit)')
@@ -24,7 +24,7 @@ sys$run({
     #+ pa-density-host
     pa_density_plot %+%
         filter(taginfo, `RNA source` == 'host') +
-        aes(color = paste(type, treatment)) +
+        aes(color = paste(Type, Treatment)) +
         labs(color = 'Condition')
 
     ggsave('data/plots/pA-density-host.pdf')
@@ -37,13 +37,13 @@ sys$run({
                               WT = c('gray', 'chocolate3', 'cadetblue3')) %>%
         mutate(KO = darken(WT, 1.5)) %>%
         mutate(None = WT) %>%
-        tidyr$gather(type, Color, -`RNA source`) %>%
-        {setNames(.$Color, paste(.$type, .$`RNA source`))} %>%
+        tidyr$gather(Type, Color, -`RNA source`) %>%
+        {setNames(.$Color, paste(.$Type, .$`RNA source`))} %>%
         setNames(gsub('None ', '', names(.)))
 
     pa_density_plot %+%
-        filter(taginfo, treatment == 'Infected') +
-        aes(color = `RNA source`, linetype = type) +
+        filter(taginfo, Treatment == 'Infected') +
+        aes(color = `RNA source`, linetype = Type) +
         scale_color_manual(values = viral_colors) +
         labs(color = 'RNA source', linetype = 'Type')
 
@@ -52,7 +52,7 @@ sys$run({
     #+ viral-infected-uninfected
     pa_density_plot %+%
         taginfo +
-        aes(color = `RNA source`, linetype = treatment) +
+        aes(color = `RNA source`, linetype = Treatment) +
         scale_color_manual(values = viral_colors) +
         labs(color = 'RNA source', linetype = 'Infection status')
 
