@@ -118,7 +118,7 @@ sys$run({
                         gr$width(pattern@unaligned)) %>%
         setNames(align_names)
 
-    tail_runs = lapply(strsplit(read_tails, ''), rle)
+    tail_runs = mclapply(strsplit(read_tails, ''), rle, mc.cores = args$ncores)
     poly_a_lengths = vapply(tail_runs, x -> x$lengths[1], integer(1))
     next_mods = vapply(tail_runs, x -> x$values[2], character(1))
     next_mod_lengths = vapply(tail_runs, x -> x$lengths[2], integer(1))
