@@ -26,7 +26,9 @@ sys$run({
         select(Tile = 1, TrimmedID = 2, `pA length` = 4, Mod = 5, `Support` = 6) %>%
         mutate(Mod = ifelse(is.na(Mod), '', Mod))
 
-    merged = inner_join(genes, taginfo, by = c(Tile = 'Tile', TrimmedID = 'TrimmedID'))
+    merged = inner_join(genes, taginfo, by = c(Tile = 'Tile', TrimmedID = 'TrimmedID')) %>%
+        # Remove duplicate identical reads per gene (how did this happen?)
+        filter(! duplicated(paste(Tile, TrimmedID, Gene, sep =':')))
 
     for_output = merged %>%
         filter(`pA length` > 0) %>%
