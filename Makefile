@@ -135,14 +135,14 @@ data/genes/%.tsv: data/mapped/%.bam ${infected-gene-annotation}
 	mkdir -p "$(dir $@)"
 	${bsub} "./scripts/find-mapped-genes '$<' '$@' '${infected-gene-annotation}'"
 
-taginfo-intermediate := $(subst /genes/,/taginfo/intermediate/,${find-genes})
+aligned-taginfo := $(subst /genes/,/taginfo/aligned/,${find-genes})
 
-.PHONY: intermediate-taginfo
-intermediate-taginfo: ${taginfo-intermediate}
+.PHONY: aligned-taginfo
+aligned-taginfo: ${aligned-taginfo}
 
 trimmed-fastq_r3 = $(subst /genes/,/trimmed/,${1:.tsv=_R3.fastq.gz})
 
-data/taginfo/intermediate/%.tsv: data/genes/%.tsv ${infected-reference} ${infected-gene-annotation}
+data/taginfo/aligned/%.tsv: data/genes/%.tsv ${infected-reference} ${infected-gene-annotation}
 	mkdir -p "$(dir $@)"
 	${bsub} "./scripts/3p-align --reference ${infected-reference} --annotation ${infected-gene-annotation} $< $(call trimmed-fastq_r3,$<) > $@"
 
