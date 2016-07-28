@@ -28,8 +28,8 @@ mc_collate = function (results, pattern, subject) {
 sys$run({
     args = sys$cmd$parse(opt('r', 'reference', 'top-level reference sequence file (fasta)'),
                          opt('a', 'annotation', 'gene reference annotation (GTF)'),
+                         opt('g', 'genes', 'ID–gene name map file'),
                          opt('j', 'ncores', 'number of cores to use', 1L),
-                         arg('genes', 'ID–gene name map file'),
                          arg('fastq', '3ʹ end sequence file'))
 
     io = modules::import('ebi-predocs/ebits/io')
