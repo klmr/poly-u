@@ -82,9 +82,8 @@ sys$run({
     }
 
     taginfo = taginfo %>%
-        do(modifications(.$mod)) %>%
-        bind_cols(taginfo, .) %>%
-        select(-mod)
+        do(modifications(.$Mod)) %>%
+        bind_cols(select(taginfo, -Mod), .)
 })
 
 # vim: ft=r
