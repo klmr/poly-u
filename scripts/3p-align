@@ -118,6 +118,7 @@ sys$run({
                         gr$width(pattern@unaligned)) %>%
         setNames(align_names)
 
+    read_tails = read_tails[substr(read_tails, 1, 1) == 'A']
     tail_runs = mclapply(strsplit(read_tails, ''), rle, mc.cores = args$ncores)
     poly_a_lengths = vapply(tail_runs, x -> x$lengths[1], integer(1))
     next_mods = vapply(tail_runs, x -> x$values[2], character(1))
