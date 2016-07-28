@@ -84,6 +84,36 @@ sys$run({
     taginfo = taginfo %>%
         do(modifications(.$Mod)) %>%
         bind_cols(select(taginfo, -Mod), .)
+
+    #+ global-modification-counts
+    taginfo %>%
+        group_by(Mod) %>%
+        summarize(Count = n(), ModLength = mean(ModLength)) %>%
+        filter(! is.na(Mod) & Mod != 'N')
+
+    taginfo %>%
+        filter(! is.na(Mod) & Mod != 'N') %>%
+        ggplot() +
+        aes(Mod) +
+        geom_bar() +
+        labs(x = 'Modification', y = 'Count') +
+        theme_bw()
+
+    ggsave('data/plots/global-modification-counts.pdf')
+
+    #+ global-modification-lengths
+    # Bees are slow workers, so subsample the dataset.
+    taginfo %>%
+        filter(! is.na(Mod) & Mod != 'N') %>%
+        ggplot() +
+        aes(color = Mod, ModLength) +
+        geom_freqpoly(stat = 'count', size = 1) +
+        scale_x_continuous(breaks = seq_len(max(taginfo$ModLength))) +
+        scale_y_log10() +
+        labs(x = 'Modification length', y = 'Count', color = 'Modification') +
+        theme_bw()
+
+    ggsave('data/plots/global-modification-lengths.pdf')
 })
 
 # vim: ft=r
