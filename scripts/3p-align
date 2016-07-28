@@ -107,7 +107,7 @@ sys$run({
     # the gene body. Ending AFTER the gene body is fine, since there may be a 3ʹ
     # UTR in the read.
 
-    valid_alignments = gr$end(alignments@subject@range) >= read_length
+    valid_alignments = gr$end(alignments@subject@range) >= gr$width(reads_3p)
     alignments = alignments[valid_alignments]
     align_names = as.character(sr$id(seq_3p[valid_alignments]))
 
