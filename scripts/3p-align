@@ -85,7 +85,11 @@ sys$run({
 
     # Multicore setup.
     indices = seq_along(reads_3p)
-    segments = split(indices, cut(indices, args$ncores, labels = FALSE))
+    cuts = if (args$ncores == 1)
+        1
+    else
+        cut(indices, args$ncores, labels = FALSE)
+    segments = split(indices, cuts)
 
     do_alignment = function (indices) {
         bios$pairwiseAlignment(reads_3p[indices],
