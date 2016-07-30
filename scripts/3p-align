@@ -113,8 +113,12 @@ sys$run({
     # gene (i.e. at position >= read_length) because otherwise they end within
     # the gene body. Ending AFTER the gene body is fine, since there may be a 3ʹ
     # UTR in the read.
+    # Furthermore, high-quality alignments should find the complete start of
+    # the read, so we require the start of the alignment to be at the start of
+    # the read.
 
-    valid_alignments = gr$end(alignments@subject@range) >= gr$width(reads_3p)
+    valid_alignments = (gr$start(alignment@pattern@range) == 1) &
+        (gr$end(alignments@subject@range) >= gr$width(reads_3p))
     alignments = alignments[valid_alignments]
     align_names = as.character(sr$id(seq_3p[valid_alignments]))
 
