@@ -62,6 +62,9 @@ sys$run({
     seq_3p = seq_3p[protein_coding]
     reads_3p = bios$reverseComplement(sr$sread(seq_3p))
 
+    # 2000 bp implies a crazy insert size for our fragments, but I did in fact
+    # find 3p reads that unambiguously map > 1kb downstream of the gene body,
+    # with the corresponding 5p read mapping *inside the ORF*.
     flank_3p_annotation = annotation %>%
         gr$flank(2000, FALSE) %>%
         gr$resize(2000 + gr$width(reads_3p), 'end')
