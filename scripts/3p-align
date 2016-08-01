@@ -86,14 +86,6 @@ sys$run({
 
     mat = bios$nucleotideSubstitutionMatrix(match = 1, mismatch = -4)
 
-    # Multicore setup.
-    indices = seq_along(reads_3p)
-    cuts = if (args$ncores == 1)
-        1
-    else
-        cut(indices, args$ncores, labels = FALSE)
-    segments = split(indices, cuts)
-
     do_alignment = function (indices) {
         bios$pairwiseAlignment(reads_3p[indices],
                                flank_3p_seq[indices],
@@ -101,6 +93,14 @@ sys$run({
                                substitutionMatrix = mat,
                                gapOpening = 20, gapExtension = 20)
     }
+
+    # Multicore setup.
+    indices = seq_along(reads_3p)
+    cuts = if (args$ncores == 1)
+        1
+    else
+        cut(indices, args$ncores, labels = FALSE)
+    segments = split(indices, cuts)
 
     # FIXME: Doesn’t work yet (klmr/modules#62)
     # modules::import_package('parallel', attach = 'mclapply')
