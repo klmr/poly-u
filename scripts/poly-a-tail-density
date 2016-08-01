@@ -102,7 +102,6 @@ sys$run({
     ggsave('data/plots/global-modification-counts.pdf')
 
     #+ global-modification-lengths
-    # Bees are slow workers, so subsample the dataset.
     taginfo %>%
         filter(! is.na(Mod) & Mod != 'N') %>%
         ggplot() +
