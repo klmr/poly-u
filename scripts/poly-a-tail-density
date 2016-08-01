@@ -87,12 +87,13 @@ sys$run({
 
     #+ global-modification-counts
     taginfo %>%
+        filter(`RNA source` == 'host') %>%
         group_by(Mod) %>%
         summarize(Count = n(), ModLength = mean(ModLength)) %>%
         filter(! is.na(Mod) & Mod != 'N')
 
     taginfo %>%
-        filter(! is.na(Mod) & Mod != 'N') %>%
+        filter(`RNA source` == 'host', ! is.na(Mod), Mod != 'N') %>%
         ggplot() +
         aes(Mod) +
         geom_bar() +
@@ -103,7 +104,7 @@ sys$run({
 
     #+ global-modification-lengths
     taginfo %>%
-        filter(! is.na(Mod) & Mod != 'N') %>%
+        filter(`RNA source` == 'host', ! is.na(Mod), Mod != 'N') %>%
         ggplot() +
         aes(color = Mod, ModLength) +
         geom_freqpoly(stat = 'count', size = 1) +
