@@ -30,8 +30,8 @@ sys$run({
     ggsave('data/plots/pA-density-host.pdf')
 
     #+ viral-pa-density
-    darken = function (cols, factor = 2)
-        rgb(t(col2rgb(cols) / factor), maxColorValue = 255)
+    darken = function (colors, factor = 2)
+        rgb(t(col2rgb(colors) / factor), maxColorValue = 255)
 
     viral_colors = data_frame(`RNA source` = relevel(factor(unique(taginfo$`RNA source`)), 'host'),
                               WT = c('gray', 'chocolate3', 'cadetblue3')) %>%
