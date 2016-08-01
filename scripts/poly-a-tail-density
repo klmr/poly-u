@@ -147,6 +147,18 @@ sys$run({
         theme_bw()
 
     ggsave('data/plots/virus-modification-lengths.pdf')
+
+    #+ host-uridylation-change
+    uridyl_frequency = taginfo %>%
+        filter(`RNA source` == 'host') %>%
+        group_by(Sample, Type, Treatment) %>%
+        summarize(`Uridylation frequency` = sum(Mod == 'T', na.rm = TRUE) / n()) %>%
+        ungroup()
+
+    uridyl_frequency %>%
+        ggplot() +
+        aes(x = paste(Type, Treatment), y = `Uridylation frequency`) +
+        geom_bar(stat = 'identity')
 })
 
 # vim: ft=r
