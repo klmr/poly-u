@@ -95,13 +95,12 @@ sys$run({
     }
 
     if (args$ncore > 1) {
-    # Multicore setup.
-    indices = seq_along(reads_3p)
-    segments = split(cut(indices, args$ncores, labels = FALSE), cuts)
-
-    # FIXME: Doesn’t work yet (klmr/modules#62)
-    # modules::import_package('parallel', attach = 'mclapply')
-    mclapply = modules::import_package('parallel')$mclapply
+        # Multicore setup.
+        indices = seq_along(reads_3p)
+        segments = split(cut(indices, args$ncores, labels = FALSE), cuts)
+        # FIXME: Doesn’t work yet (klmr/modules#62)
+        # modules::import_package('parallel', attach = 'mclapply')
+        mclapply = modules::import_package('parallel')$mclapply
     } else {
         segments = list(seq_along(reads_3p))
         mclapply = X ~ FUN ~ ... ~ mc.cores -> lapply(X, FUN, ...)
