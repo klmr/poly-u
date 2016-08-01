@@ -100,7 +100,7 @@ sys$run({
         labs(x = 'Modification', y = 'Count') +
         theme_bw()
 
-    ggsave('data/plots/global-modification-counts.pdf')
+    ggsave('data/plots/global-modification-counts.pdf', scale = 0.5)
 
     #+ global-modification-lengths
     taginfo %>%
