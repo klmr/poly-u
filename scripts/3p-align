@@ -86,14 +86,6 @@ sys$run({
 
     mat = bios$nucleotideSubstitutionMatrix(match = 1, mismatch = -4)
 
-    # Multicore setup.
-    indices = seq_along(reads_3p)
-    cuts = if (args$ncores == 1)
-        1
-    else
-        cut(indices, args$ncores, labels = FALSE)
-    segments = split(indices, cuts)
-
     do_alignment = function (indices) {
         bios$pairwiseAlignment(reads_3p[indices],
                                flank_3p_seq[indices],
@@ -102,9 +94,17 @@ sys$run({
                                gapOpening = 20, gapExtension = 20)
     }
 
-    # FIXME: Doesn’t work yet (klmr/modules#62)
-    # modules::import_package('parallel', attach = 'mclapply')
-    mclapply = modules::import_package('parallel')$mclapply
+    if (args$ncore > 1) {
+        # Multicore setup.
+        indices = seq_along(reads_3p)
+        segments = split(cut(indices, args$ncores, labels = FALSE), cuts)
+        # FIXME: Doesn’t work yet (klmr/modules#62)
+        # modules::import_package('parallel', attach = 'mclapply')
+        mclapply = modules::import_package('parallel')$mclapply
+    } else {
+        segments = list(seq_along(reads_3p))
+        mclapply = X ~ FUN ~ ... ~ mc.cores -> lapply(X, FUN, ...)
+    }
 
     alignments = mclapply(segments, do_alignment, mc.cores = args$ncores) %>%
         mc_collate(reads_3p, flank_3p_seq)
