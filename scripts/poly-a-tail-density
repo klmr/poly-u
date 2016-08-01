@@ -114,6 +114,39 @@ sys$run({
         theme_bw()
 
     ggsave('data/plots/global-modification-lengths.pdf')
+
+    #+ virus-modification-count
+    virus_taginfo = taginfo %>%
+        filter(`RNA source` != 'host',
+               Type == 'KO',
+               Treatment == 'Infected',
+               ! is.na(Mod),
+               Mod != 'N')
+
+    virus_taginfo %>%
+        group_by(Mod) %>%
+        summarize(Count = n(), ModLength = mean(ModLength))
+
+    virus_taginfo %>%
+        ggplot() +
+        aes(Mod) +
+        geom_bar() +
+        labs(x = 'Modification', y = 'Count') +
+        theme_bw()
+
+    ggsave('data/plots/virus-modification-counts.pdf', scale = 0.5)
+
+    #+ virus-modification-lengths
+    virus_taginfo %>%
+        ggplot() +
+        aes(color = Mod, ModLength) +
+        geom_freqpoly(stat = 'count', size = 1) +
+        scale_x_continuous(breaks = seq_len(max(virus_taginfo$ModLength))) +
+        scale_y_log10() +
+        labs(x = 'Modification length', y = 'Count', color = 'Modification') +
+        theme_bw()
+
+    ggsave('data/plots/virus-modification-lengths.pdf')
 })
 
 # vim: ft=r
