@@ -2,6 +2,22 @@
 
 sys = modules::import('klmr/sys')
 
+mutate_when = function (.data, filter, ...) {
+    mutate_when_(.data, lazyeval::lazy(filter), .dots = lazyeval::lazy_dots(...))
+}
+
+mutate_when_ = function (.data, filter, ..., .dots) {
+    dots = lazyeval::all_dots(.dots, ..., all_named = TRUE)
+    selected_rows = lazyeval::lazy_eval(filter, .data)
+
+    select_result_rows = function (result)
+        if (length(result) == 1) result else result[selected_rows]
+
+    results = lapply(dots, lazyeval::lazy_eval, data = .data)
+    .data[selected_rows, names(dots)] = lapply(results, select_result_rows)
+    .data
+}
+
 sys$run({
     args = sys$cmd$parse(arg('taginfo', 'input taginfo file'))
 
@@ -83,7 +99,8 @@ sys$run({
 
     taginfo = taginfo %>%
         do(modifications(.$Mod)) %>%
-        bind_cols(select(taginfo, -Mod), .)
+        bind_cols(select(taginfo, -Mod), .) %>%
+        mutate_when(Mod == 'N', Mod = '', ModLength = 0)
 
     #+ global-modification-counts
     taginfo %>%
