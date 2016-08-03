@@ -10,11 +10,8 @@ mutate_when_ = function (.data, .filter, ..., .dots) {
     dots = lazyeval::all_dots(.dots, ..., all_named = TRUE)
     selected_rows = lazyeval::lazy_eval(.filter, .data)
 
-    select_result_rows = function (result)
-        if (length(result) == 1) result else result[selected_rows]
-
-    results = lapply(dots, lazyeval::lazy_eval, data = .data)
-    .data[selected_rows, names(dots)] = lapply(results, select_result_rows)
+    .data[selected_rows, names(dots)] =
+        lapply(dots, lazyeval::lazy_eval, data = .data[selected_rows, ])
     .data
 }
 
