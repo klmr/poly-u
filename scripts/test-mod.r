@@ -11,3 +11,11 @@ taginfo_test_treatment = taginfo_data %>%
                   var.equal = TRUE)$p.value) %>%
     mutate(p = unlist(p)) %>%
     ungroup()
+
+taginfo_test_type = taginfo_data %>%
+    group_by(Mod) %>%
+    do(p = t.test(.[.$Type == 'WT', ]$Frequency,
+                  .[.$Type == 'KO', ]$Frequency,
+                  var.equal = TRUE)$p.value) %>%
+    mutate(p = unlist(p)) %>%
+    ungroup()
