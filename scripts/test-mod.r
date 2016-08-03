@@ -19,3 +19,12 @@ taginfo_test_type = taginfo_data %>%
                   var.equal = TRUE)$p.value) %>%
     mutate(p = unlist(p)) %>%
     ungroup()
+
+none = '#00000000'
+
+ggplot(taginfo_data) +
+    aes(paste(Type, Treatment), Frequency, color = as.factor(Sample)) +
+    geom_point(shape = 21, fill = none, size = 2) +
+    facet_wrap(~ Mod, scales = 'free_y') +
+    labs(x = 'Condition', color = 'Sample') +
+    theme_bw()
