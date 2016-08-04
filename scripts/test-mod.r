@@ -28,3 +28,5 @@ ggplot(taginfo_data) +
     facet_wrap(~ Mod, scales = 'free_y') +
     labs(x = 'Condition', color = 'Sample') +
     theme_bw()
+
+ggsave('data/plots/mod-frequency-change.pdf', width = 10, height = 7)
