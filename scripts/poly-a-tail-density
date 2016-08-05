@@ -2,25 +2,13 @@
 
 sys = modules::import('klmr/sys')
 
-mutate_when = function (.data, .filter, ...) {
-    mutate_when_(.data, lazyeval::lazy(.filter), .dots = lazyeval::lazy_dots(...))
-}
-
-mutate_when_ = function (.data, .filter, ..., .dots) {
-    dots = lazyeval::all_dots(.dots, ..., all_named = TRUE)
-    selected_rows = lazyeval::lazy_eval(.filter, .data)
-
-    .data[selected_rows, names(dots)] =
-        lapply(dots, lazyeval::lazy_eval, data = .data[selected_rows, ])
-    .data
-}
-
 sys$run({
     args = sys$cmd$parse(arg('taginfo', 'input taginfo file'))
 
     io = modules::import('ebi-predocs/ebits/io')
     modules::import_package('dplyr', attach = TRUE)
     tidyr = modules::import_package('tidyr')
+    modules::import('./mutate_when', attach = TRUE)
 
     taginfo = io$read_table(args$taginfo, header = TRUE) %>%
         mutate(`RNA source` = ifelse(grepl('ORV', Gene, fixed = TRUE), Gene, 'host'))
