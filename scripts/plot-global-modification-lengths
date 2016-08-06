@@ -1,0 +1,8 @@
+#!/usr/bin/env Rscript
+
+sys = modules::import('sys')
+
+sys$run({
+})
+
+# vim: ft=r

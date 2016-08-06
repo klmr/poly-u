@@ -1,0 +1,38 @@
+#!/usr/bin/env Rscript
+
+sys = modules::import('klmr/sys')
+
+"Extract the first (non-A) tail modification (if any) and its length."
+
+sys$run({
+    args = sys$cmd$parse(opt('t', 'taginfo', 'input taginfo file'),
+                         opt('o', 'tailinfo', 'output tail modification file'))
+
+    io = modules::import('ebi-predocs/ebits/io')
+    modules::import_package('dplyr', attach = TRUE)
+    tidyr = modules::import_package('tidyr')
+
+    taginfo = io$read_table(args$taginfo, header = TRUE) %>%
+        mutate(Source = ifelse(grepl('ORV', Gene, fixed = TRUE), Gene, 'host'))
+
+    # The first version of this used `rle`, but was much too slow and memory
+    # intensive.
+    modifications = function(seq) {
+        first_length = function (str) {
+            if (! nzchar(str))
+                return(0L)
+
+            first_char = substr(str, 1L, 1L)
+            pos = 2L
+            while (substr(str, pos, pos) == first_char) {
+                pos = pos + 1L
+            }
+            pos - 1L
+        }
+
+        data_frame(ModLength = vapply(seq, first_length, integer(1)),
+                   Mod = substr(seq, 1L, 1L))
+    }
+})
+
+# vim: ft=r
