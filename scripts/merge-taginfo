@@ -2,37 +2,81 @@
 
 sys = modules::import('klmr/sys')
 
-"Merge a gene–ID mapping with the corresponding tailseeker taginfo file."
+"Merge a gene–ID mapping with the corresponding tailseeker file."
 
 sys$run({
     args = sys$cmd$parse(opt('g', 'genes', 'ID–gene name map file'),
-                         opt('t', 'taginfo', 'tailseeker taginfo file'))
+                         opt('r', 'reads', '3ʹ end sequence file'))
 
     io = modules::import('ebi-predocs/ebits/io')
     dplyr = modules::import_package('dplyr', attach = TRUE)
     tidyr = modules::import_package('tidyr', attach = TRUE)
     modules::import('klmr/functional/lambda')
+    modules::import('./mutate_when', attach = TRUE)
+    sr = modules::import_package('ShortRead')
 
     genes = io$read_table(args$genes) %>%
         select(ReadID = 1, Gene = 2) %>%
-        extract(ReadID, c('Tile', 'TrimmedID'), '^([^:]+):0*(\\d+)', convert = TRUE)
+        extract(ReadID, c('Tile', 'ID'), '^([^:]+):(\\d+)')
 
-    if (tools::file_ext(args$taginfo) == 'gz') {
-        args$taginfo = gzfile(args$taginfo, 'r')
-        on.exit(close(args$taginfo))
+    # Unfortunately the poly-A tail length reported by tailseeker sometimes, but
+    # not always, includes the tail modifications. To fix this we need to
+    # manually go over the 3ʹ reads, find the matching read, and check the
+    # poly-A length.
+
+    flag_test = function (bit_pow_2)
+        function (flag) bitwAnd(flag, bit_pow_2) == bit_pow_2
+
+    has_poly_a_tail = Negate(flag_test(4096))
+    has_high_confidence = flag_test(2)
+    has_too_many_dark_cycles = flag_test(2048)
+
+    # NB: For simplicity we are working on the reverse complemented data here!
+    pa_length = function (seq, mod_len) {
+        find_end = function (seq, pos) {
+            while (substr(seq, pos, pos) == 'T') pos = pos + 1L
+            pos - 1L
+        }
+        unlist(Map(find_end, seq, mod_len + 1L)) - mod_len
     }
 
-    taginfo = io$read_table(args$taginfo, sep = '\t') %>%
-        select(Tile = 1, TrimmedID = 2, `pA length` = 4, Mod = 5, `Support` = 6) %>%
-        mutate(Mod = ifelse(is.na(Mod), '', Mod))
+    reads = sr$readFastq(args$fastq)
 
-    merged = inner_join(genes, taginfo, by = c(Tile = 'Tile', TrimmedID = 'TrimmedID')) %>%
-        # Remove duplicate identical reads per gene (how did this happen?)
-        filter(! duplicated(paste(Tile, TrimmedID, Gene, sep =':')))
+    taginfo = data_frame(ID = as.character(sr$id(reads))) %>%
+        separate(ID, c('Tile', 'ID', 'Flags', 'Support', 'pA length', 'Mod'), ':') %>%
+        mutate(Flags = strtoi(Flags, 16),
+               Seq = as.character(sr$sread(reads))) %>%
+        # Ignore low quality reads altogether from here on.
+        filter(! has_too_many_dark_cycles(Flags)) %>%
+        mutate(`pA length` = as.integer(`pA length`),
+               ActualLength = `pA length`) %>%
+        # Verify Tailseeker length calls.
+        mutate_when(has_poly_a_tail(Flags) & nzchar(Mod),
+                    ActualLength = pa_length(Seq, nchar(Mod))) %>%
+        # We trust high-quality Tailseeker more than our correction when we
+        # might be over-estimating poly-A length.
+        mutate_when(has_high_confidence(Flags) & ActualLength > `pA length`,
+                    ActualLength = `pA length`)
+
+    mismatch_calls = taginfo %>%
+        filter(has_poly_a_tail(Flags), nzchar(Mod), `pA length` != -1) %>%
+        mutate(D = `pA length` - ActualLength) %>%
+        summarize(Correct = sum(D == 0),
+                  Incorrect = n() - Correct,
+                  MeanDiff = mean(D),
+                  DiffSD = sd(D))
+
+    message('# poly-A length correction:')
+    capture.output(write.table(mismatch_calls, sep = '\t', quote = FALSE,
+                               row.names = FALSE)) %>%
+        paste(collapse = '\n') %>% message()
+
+    merged = inner_join(genes, taginfo, by = c(Tile = 'Tile', ID = 'ID'))
 
     for_output = merged %>%
         filter(`pA length` > 0) %>%
-        select(Support, `pA length`, Mod, Gene) %>%
+        select(-`pA length`, -Seq) %>%
+        select(Support, `pA length` = ActualLength, Mod, Gene) %>%
         mutate(filename = tools::file_path_sans_ext(basename(args$gene))) %>%
         extract(filename, c('Type', 'Treatment', 'Sample'),
                 '([^_]+)_(.*)(\\d+)$')
