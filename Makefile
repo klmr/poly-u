@@ -154,11 +154,11 @@ taginfo = $(subst /genes/,/taginfo/,${find-genes})
 .PHONY: taginfo
 taginfo: ${taginfo}
 
-find-taginfo = raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/taginfo/$(notdir $1).txt.gz
+find-reads_3p = raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(notdir $1)_R3.fastq.gz
 
-data/taginfo/%.tsv: data/genes/%.tsv $$(call find-taginfo,%)
+data/taginfo/%.tsv: data/genes/%.tsv $$(call find-reads_3p,%)
 	mkdir -p "$(dir $@)"
-	./scripts/merge-taginfo --genes "$(firstword $+)" --taginfo "$(lastword $+)" > "$@"
+	./scripts/merge-taginfo --genes "$(firstword $+)" --reads "$(lastword $+)" > "$@"
 
 .PHONY: merged-taginfo
 merged-taginfo: data/taginfo/all-taginfo.tsv
