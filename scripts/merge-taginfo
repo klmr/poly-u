@@ -74,7 +74,6 @@ sys$run({
     merged = inner_join(genes, taginfo, by = c(Tile = 'Tile', ID = 'ID'))
 
     for_output = merged %>%
-        filter(`pA length` > 0) %>%
         select(-`pA length`, -Seq) %>%
         select(Support, `pA length` = ActualLength, Mod, Gene) %>%
         mutate(filename = tools::file_path_sans_ext(basename(args$gene))) %>%
