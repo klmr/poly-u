@@ -158,7 +158,8 @@ find-reads_3p = raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(
 
 data/taginfo/%.tsv: data/genes/%.tsv $$(call find-reads_3p,%)
 	mkdir -p "$(dir $@)"
-	./scripts/merge-taginfo --genes "$(firstword $+)" --reads "$(lastword $+)" > "$@"
+	${bsub} "./scripts/merge-taginfo \
+		--genes '$(firstword $+)' --reads '$(lastword $+)' > '$@'"
 
 .PHONY: merged-taginfo
 merged-taginfo: data/taginfo/all-taginfo.tsv
