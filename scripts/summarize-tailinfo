@@ -1,0 +1,23 @@
+#!/usr/bin/env Rscript
+
+sys = modules::import('klmr/sys')
+
+"Compute a per-base summary of the modification lengths for all tail
+modifications"
+
+sys$run({
+    args = sys$cmd$parse(arg('tailinfo', 'input tailinfo file'))
+
+    io = modules::import('ebi-predocs/ebits/io')
+    modules::import_package('dplyr', attach = TRUE)
+
+    tailinfo = io$read_table(args$tailinfo, header = TRUE, na.strings = '_')
+
+    tail_summary = tailinfo %>%
+        group_by(Type, Treatment, Sample, Source, Mod, ModLength) %>%
+        summarize(Count = n())
+
+    io$write_table(tail_summary, stdout(), sep = '\t')
+})
+
+# vim: ft=r
