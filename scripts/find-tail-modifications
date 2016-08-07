@@ -13,7 +13,7 @@ sys$run({
     tidyr = modules::import_package('tidyr')
     modules::import('./mutate_when', attach = TRUE)
 
-    taginfo = io$read_table(args$taginfo, header = TRUE) %>%
+    taginfo = io$read_table(args$taginfo, header = TRUE, na.strings = '_') %>%
         mutate(Source = ifelse(grepl('ORV', Gene, fixed = TRUE), Gene, 'host'))
 
     # The first version of this used `rle`, but was much too slow and memory
