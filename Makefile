@@ -162,8 +162,11 @@ data/taginfo/%.tsv: data/genes/%.tsv $$(call find-reads_3p,%)
 		--genes '$(firstword $+)' --reads '$(lastword $+)' > '$@'"
 
 .PHONY: merged-taginfo
-merged-taginfo: data/taginfo/all-taginfo.tsv
+merged-taginfo: data/taginfo/all-tailinfo.tsv
 
 data/taginfo/all-taginfo.tsv: ${taginfo}
 	head -n 1 "$<" > "$@"
 	tail -q -n +2 $+ >> "$@"
+
+data/taginfo/all-tailinfo.tsv: data/taginfo/all-taginfo.tsv
+	./scripts/find-tail-modifications '$<' > '$@'
