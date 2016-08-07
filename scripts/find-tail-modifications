@@ -2,15 +2,16 @@
 
 sys = modules::import('klmr/sys')
 
-"Extract the first (non-A) tail modification (if any) and its length."
+"Extract the first (non-A) tail modification (if any) and its length, and
+writes the resulting table to the standard output"
 
 sys$run({
-    args = sys$cmd$parse(opt('t', 'taginfo', 'input taginfo file'),
-                         opt('o', 'tailinfo', 'output tail modification file'))
+    args = sys$cmd$parse(arg('taginfo', 'input taginfo file'))
 
     io = modules::import('ebi-predocs/ebits/io')
     modules::import_package('dplyr', attach = TRUE)
     tidyr = modules::import_package('tidyr')
+    modules::import('./mutate_when', attach = TRUE)
 
     taginfo = io$read_table(args$taginfo, header = TRUE) %>%
         mutate(Source = ifelse(grepl('ORV', Gene, fixed = TRUE), Gene, 'host'))
@@ -33,6 +34,13 @@ sys$run({
         data_frame(ModLength = vapply(seq, first_length, integer(1)),
                    Mod = substr(seq, 1L, 1L))
     }
+
+    tailinfo = taginfo %>%
+        do(modifications(.$Mod)) %>%
+        bind_cols(select(taginfo, -Mod), .) %>%
+        mutate_when(Mod == 'N', Mod = '', ModLength = 0)
+
+    io$write_table(tailinfo, stdout(), sep = '\t')
 })
 
 # vim: ft=r
