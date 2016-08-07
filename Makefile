@@ -170,3 +170,12 @@ data/taginfo/all-taginfo.tsv: ${taginfo}
 
 data/taginfo/all-tailinfo.tsv: data/taginfo/all-taginfo.tsv
 	./scripts/find-tail-modifications '$<' > '$@'
+
+data/taginfo/poly-a-summary.tsv: data/taginfo/all-tailinfo.tsv
+	./scripts/summarize-poly-a-length '$<' > '$@'
+
+data/taginfo/tail-mod-summary.tsv: data/taginfo/all-tailinfo.tsv
+	./scripts/summarize-tailinfo '$<' > '$@'
+
+.PHONY: summaries
+summaries: data/taginfo/poly-a-summary.tsv data/taginfo/tail-mod-summary.tsv
