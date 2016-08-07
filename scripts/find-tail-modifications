@@ -10,7 +10,6 @@ sys$run({
 
     io = modules::import('ebi-predocs/ebits/io')
     modules::import_package('dplyr', attach = TRUE)
-    tidyr = modules::import_package('tidyr')
     modules::import('./mutate_when', attach = TRUE)
 
     taginfo = io$read_table(args$taginfo, header = TRUE, na.strings = '_') %>%
