@@ -1,0 +1,29 @@
+#!/usr/bin/env Rscript
+
+sys = modules::import('klmr/sys')
+
+sys$run({
+    args = sys$cmd$parse(arg('summary', 'tail summary file'),
+                         opt('o', 'plot', 'plot output filename'))
+
+    io = modules::import('ebi-predocs/ebits/io')
+    modules::import_package('dplyr', attach = TRUE)
+    modules::import_package('ggplot2', attach = TRUE)
+    modules::import('./theme')
+
+    viral_mod = io$read_table(args$summary, header = TRUE, na.strings = NA) %>%
+        filter(Source != 'host', Mod == '' | Mod == 'T', Treatment == 'Infected') %>%
+        select(-Mod, -Treatment) %>%
+        group_by(Type, Source, ModLength) %>%
+        summarize(Frequency = mean(Frequency))
+
+    p = ggplot(viral_mod) +
+        aes(x = ModLength, y = Frequency, fill = Type) +
+        geom_bar(stat = 'identity', position = 'dodge') +
+        facet_wrap(~ Source, nrow = 2) +
+        labs(x = 'Uridylation length', y = 'Fraction of reads')
+
+    ggsave(args$plot, p, width = 4, height = 3)
+})
+
+# vim: ft=r
