@@ -32,9 +32,10 @@ sys$run({
                        alpha = 0.5) +
         scale_x_continuous(limits = c(0, 80),
                            breaks = c(1, seq(20, 80, by = 20))) +
-        labs(x = 'poly­A length',
-             y = 'Read frequency (running mean, arb. unit)', color = 'Type')
-    ggsave(args$plot, p)
+        labs(x = 'poly­A length', y = 'Fraction of reads (running mean)',
+             color = 'Type')
+
+    ggsave(args$plot, p, width = 5, height = 4)
 })
 
 # vim: ft=r
