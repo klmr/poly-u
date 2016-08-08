@@ -15,7 +15,10 @@ sys$run({
 
     tail_summary = tailinfo %>%
         group_by(Type, Treatment, Sample, Source, Mod, ModLength) %>%
-        summarize(Count = n())
+        summarize(Count = n()) %>%
+        group_by(Type, Treatment, Sample) %>%
+        mutate(Frequency = Count / sum(Count)) %>%
+        ungroup()
 
     io$write_table(tail_summary, stdout(), sep = '\t')
 })

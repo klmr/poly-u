@@ -15,7 +15,10 @@ sys$run({
 
     poly_a_summary = tailinfo %>%
         group_by(Type, Treatment, Sample, Source, `pA length`) %>%
-        summarize(Count = n())
+        summarize(Count = n()) %>%
+        group_by(Type, Treatment, Sample) %>%
+        mutate(Frequency = Count / sum(Count)) %>%
+        ungroup()
 
     io$write_table(poly_a_summary, stdout(), sep = '\t')
 })
