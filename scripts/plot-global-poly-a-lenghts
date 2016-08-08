@@ -16,23 +16,25 @@ sys$run({
     theme_set(theme_bw())
 
     lengths = io$read_table(args$summary, header = TRUE) %>%
-        filter(Treatment == 'Uninfected', Source == 'host')
+        filter(Treatment == 'Uninfected', Source == 'host') %>%
+        select(-Treatment, -Source)
 
     length_ranges = lengths %>%
         filter(`pA length` > 0) %>%
-        tidyr$spread(Sample, Count) %>%
+        select(-Count) %>%
+        tidyr$spread(Sample, Frequency) %>%
         mutate_at(vars(`1`, `2`), . -> runmean(., 5)) %>%
-        mutate(Count = (`1` + `2`) / 2)
+        mutate(Frequency = (`1` + `2`) / 2)
 
     p = ggplot(length_ranges) +
-        aes(`pA length`, runmean(Count, 5), color = Type) +
+        aes(`pA length`, runmean(Frequency, 5), color = Type) +
         geom_line(size = 1) +
         geom_linerange(aes(ymin = runmean(`1`, 5), ymax = runmean(`2`, 5)),
                        alpha = 0.5) +
         scale_x_continuous(limits = c(0, 80),
                            breaks = c(1, seq(20, 80, by = 20))) +
-        labs(x = 'poly­A length', y = 'Read count (running mean)',
-             color = 'Genotype')
+        labs(x = 'poly­A length',
+             y = 'Read frequency (running mean, arb. unit)', color = 'Type')
     ggsave(args$plot, p)
 })
 
