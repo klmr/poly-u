@@ -14,12 +14,18 @@ sys$run({
     viral_mod = io$read_table(args$summary, header = TRUE, na.strings = NA) %>%
         filter(Source != 'host', Mod == '' | Mod == 'T', Treatment == 'Infected') %>%
         select(-Mod, -Treatment) %>%
+        mutate(Source = sub('-', '­', Source)) %>%
         group_by(Type, Source, ModLength) %>%
-        summarize(Frequency = mean(Frequency))
+        mutate(min = min(Frequency), max = max(Frequency),
+               Frequency = mean(Frequency)) %>%
+        ungroup()
 
+    dodge = position_dodge(width = 0.9)
     p = ggplot(viral_mod) +
         aes(x = ModLength, y = Frequency, fill = Type) +
-        geom_bar(stat = 'identity', position = 'dodge') +
+        geom_bar(stat = 'identity', position = dodge) +
+        geom_linerange(aes(ymin = min, ymax = max), position = dodge,
+                       color = '#606060') +
         facet_wrap(~ Source, nrow = 2) +
         labs(x = 'Uridylation length', y = 'Fraction of reads')
 
