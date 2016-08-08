@@ -40,7 +40,7 @@ sys$run({
         unlist(Map(find_end, seq, mod_len + 1L)) - mod_len
     }
 
-    reads = sr$readFastq(args$fastq)
+    reads = sr$readFastq(args$reads)
 
     taginfo = data_frame(ID = as.character(sr$id(reads))) %>%
         separate(ID, c('Tile', 'ID', 'Flags', 'Support', 'pA length', 'Mod'), ':') %>%
