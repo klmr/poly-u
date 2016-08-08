@@ -10,7 +10,6 @@ sys$run({
 
     io = modules::import('ebi-predocs/ebits/io')
     modules::import_package('dplyr', attach = TRUE)
-    modules::import('./mutate_when', attach = TRUE)
 
     taginfo = io$read_table(args$taginfo, header = TRUE, na.strings = '_') %>%
         mutate(Source = ifelse(grepl('ORV', Gene, fixed = TRUE), Gene, 'host'))
@@ -34,10 +33,16 @@ sys$run({
                    Mod = substr(seq, 1L, 1L))
     }
 
+    # Previously, `N` tail modifications were converted to *no* tail
+    # modifications but this is inaccurate: `N` marks the presence of an
+    # unknown tail modification rather than its absence. Confounding these
+    # values would skew the analysis. We thus now remove these uninterpretable
+    # values.
+
     tailinfo = taginfo %>%
         do(modifications(.$Mod)) %>%
         bind_cols(select(taginfo, -Mod), .) %>%
-        mutate_when(Mod == 'N', Mod = '', ModLength = 0)
+        filter(Mod != 'N')
 
     io$write_table(tailinfo, stdout(), sep = '\t')
 })
