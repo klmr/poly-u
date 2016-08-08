@@ -12,8 +12,7 @@ sys$run({
     modules::import_package('ggplot2', attach = TRUE)
     tidyr = modules::import_package('tidyr')
     modules::import('./runmean', attach = TRUE)
-
-    theme_set(theme_bw())
+    modules::import('./theme')
 
     lengths = io$read_table(args$summary, header = TRUE) %>%
         filter(Treatment == 'Uninfected', Source == 'host') %>%
