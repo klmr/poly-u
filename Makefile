@@ -106,8 +106,9 @@ data/mapped/%.bam: data/trimmed/%_R5.fastq.gz ${infected-index}
 	mkdir -p "$(dir $@)"
 	${bsub} -n 12 -M24000 -R'select[mem>24000]' -R'rusage[mem=24000]' \
 		"STAR --runThreadN 12 --genomeDir '$(dir ${infected-index})' \
-		--runMode alignReads --alignEndsType Local \
-		--outFilterMultimapNmax 1 \
+		--runMode alignReads --alignEndsType EndToEnd \
+		--scoreInsOpen -10000 --scoreDelOpen -10000 \
+		--outFilterMismatchNmax 0 --outFilterMultimapNmax 1 \
 		--readFilesIn $< --readFilesCommand 'gunzip -c' \
 		--outSAMtype BAM Unsorted --outFileNamePrefix '$(basename $@)'"
 	mv "$(basename $@)Aligned.out.bam" "$(basename $@).bam"
