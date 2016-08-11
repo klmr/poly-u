@@ -1,0 +1,61 @@
+#!/usr/bin/env Rscript
+
+sys = modules::import('klmr/sys')
+
+sys$run({
+    args = sys$cmd$parse(opt('f', 'fastq', '3ʹ end sequence file'),
+                         opt('r', 'reference', 'the reference sequences'),
+                         arg('reads', 'tab-separated read IDs and reference name file'))
+
+    io = modules::import('ebi-predocs/ebits/io')
+    modules::import_package('dplyr', attach = TRUE)
+    bios = modules::import_package('Biostrings')
+    sr = modules::import_package('ShortRead')
+    modules::import('klmr/functional/lambda')
+    modules::import('./mutate_when', attach = TRUE)
+
+    reads = local({
+        check_bases = 30
+        reference = bios$readDNAStringSet(args$reference) %>%
+            bios$reverseComplement() %>%
+            substr(., 1, check_bases)
+
+        seq_3p = sr$readFastq(args$fastq)
+
+        io$read_table(args$reads, sep = '\t') %>%
+            select(ID = 1, Reference = 2) %>%
+            mutate(Tail = reference[Reference],
+                   SeqPos = match(ID, as.character(sr$id(seq_3p))),
+                   Read = as.character(sr$sread(seq_3p[SeqPos]))) %>%
+            select(-SeqPos)
+    })
+
+    revcomp = seq -> as.character(bios$reverseComplement(bios$DNAStringSet(seq)))
+
+    # Performing an alignment works incredibly badly for finding modified
+    # sequences. The first approach to fix that was to search for N k-mers in
+    # the tail of the reference sequence, thus allowing for N-1 mistakes). But
+    # even this led to spurious hits due to fragmentation. We therefore now
+    # simply search for the last few bases of the reference inside the reads,
+    # requiring an exact match.
+
+    regexpr_fixed = function (pattern, text)
+        unlist(Map(regexpr, pattern, text, fixed = TRUE))
+
+    # Actually, we might allow *some* tolerance.
+    regexpr_fuzzy = function (pattern, text, tolerance = 1) {
+        result = bios$pairwiseAlignment(pattern, text, type = 'global-local')
+        ifelse(bios$score(result) >= (nchar(pattern) - tolerance),
+               bios$start(result@subject), -1)
+    }
+
+    results = reads %>%
+        mutate(TailEndPos = regexpr_fuzzy(Tail, Read)) %>%
+        filter(TailEndPos != -1) %>%
+        mutate(Tail = revcomp(substr(Read, 1, TailEndPos - 1))) %>%
+        mutate(`pA length` = pmax(attr(regexpr('^A+', Tail), 'match.length'), 0L)) %>%
+        mutate_when(`pA length` > 0, Tail = substr(Tail, `pA length` + 1, nchar(Tail))) %>%
+        select(-Read, -TailEndPos)
+})
+
+# vim: ft=r
