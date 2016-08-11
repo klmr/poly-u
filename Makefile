@@ -121,6 +121,37 @@ data/qc/multiqc_report.html: ${trimmed-reads} ${mapped-reads}
 	multiqc --force --outdir data/qc \
 		data/trimmed data/qc data/mapped
 
+data/softclip-mapped/%.bam: data/trimmed/%_R5.fastq.gz ${infected-index}
+	mkdir -p "$(dir $@)"
+	${bsub} -n 12 -M24000 -R'select[mem>24000]' -R'rusage[mem=24000]' \
+		"STAR --runThreadN 12 --genomeDir '$(dir ${infected-index})' \
+		--runMode alignReads --alignEndsType Local \
+		--outFilterMultimapNmax 1 \
+		--readFilesIn $< --readFilesCommand 'gunzip -c' \
+		--outSAMtype BAM Unsorted --outFileNamePrefix '$(basename $@)'"
+	mv "$(basename $@)Aligned.out.bam" "$(basename $@).bam"
+
+data/softclip-mapped/%-sorted.bam.bai: data/softclip-mapped/%.bam
+	samtools sort -o "$(basename $@)" "$<"
+	samtools index "$(basename $@)"
+
+# The mapped data with soft-clipping contains many spurious matches to the
+# viral RNA. We filter this by taking all putative viral RNA hits and verify
+# that their 3p tails actually align well to the 3p end of the viral RNA
+# reference.
+
+find-reads_3p = raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(notdir $1)_R3.fastq.gz
+
+data/mapped/viral/%.tsv: data/softclip-mapped/%-sorted.bam data/softclip-mapped/%-sorted.bam.bai ${viral-reference}
+	mkdir -p "$(dir $@)"
+	samtools view '$<' ORV-RNA1 ORV-RNA2 | cut -f1,3 > '$(basename $@).id'
+	${bsub} "./scripts/verify-3p-mapping \
+		--fastq '$(call find-reads_3p,$*)' \
+		--reference '${viral-reference}' \
+		'$(basename $@).id' \
+		> '$@'"
+	rm -f '$(basename $@).id'
+
 ${gene-annotation}: ${annotation}
 	awk '($$3 == "gene") {print $$0}' '$<' > '$@'
 
@@ -154,8 +185,6 @@ taginfo = $(subst /genes/,/taginfo/,${find-genes})
 
 .PHONY: taginfo
 taginfo: ${taginfo}
-
-find-reads_3p = raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(notdir $1)_R3.fastq.gz
 
 data/taginfo/%.tsv: data/genes/%.tsv $$(call find-reads_3p,%)
 	mkdir -p "$(dir $@)"
