@@ -56,6 +56,8 @@ sys$run({
         mutate(`pA length` = pmax(attr(regexpr('^A+', Tail), 'match.length'), 0L)) %>%
         mutate_when(`pA length` > 0, Tail = substr(Tail, `pA length` + 1, nchar(Tail))) %>%
         select(-Read, -TailEndPos)
+
+    io$write_table(results, stdout(), sep = '\t')
 })
 
 # vim: ft=r
