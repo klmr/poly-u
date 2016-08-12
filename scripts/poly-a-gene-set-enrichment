@@ -1,0 +1,31 @@
+args = list(taginfo = 'data/taginfo/all-taginfo.tsv')
+
+io = modules::import('ebi-predocs/ebits/io')
+modules::import_package('dplyr', attach = TRUE)
+modules::import('./mutate_when', attach = TRUE)
+modules::import('./theme')
+modules::import_package('ggplot2', attach = TRUE)
+
+clamp = function (x, min, max)
+    pmin(pmax(x, min), max)
+
+taginfo = io$read_table(args$taginfo, header = TRUE, na.strings = NA) %>%
+    filter(! grepl('ORV-RNA[12]', Gene)) %>%
+    rename(palen = `pA length`) %>%
+    mutate(palen = clamp(palen, 0, 80))
+
+taginfo_summary = taginfo %>%
+    group_by(Type, Treatment, Sample, palen) %>%
+    summarize(Count = sum(Support)) %>%
+    mutate(Freq = Count / sum(Count)) %>%
+    ungroup()
+
+ggplot(taginfo_summary) +
+    aes(palen, Freq, color = paste(Type, Treatment), linetype = as.factor(Sample)) +
+    geom_line()
+
+ggplot(taginfo) +
+    aes(palen, ..density.., color = paste(Type, Treatment)) +
+    geom_freqpoly(binwidth = 6)
+
+# vim: ft=r
