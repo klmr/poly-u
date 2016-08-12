@@ -188,7 +188,7 @@ taginfo: ${taginfo}
 
 data/taginfo/%.tsv: data/genes/%.tsv $$(call find-reads_3p,%)
 	mkdir -p "$(dir $@)"
-	${bsub} -M 12000 -R'select[mem>12000] rusage[mem=12000]' \
+	${bsub} -M 16000 -R'select[mem>16000] rusage[mem=16000]' \
 		"./scripts/merge-taginfo \
 		--genes '$(firstword $+)' --reads '$(lastword $+)' > '$@'"
 
