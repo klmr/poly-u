@@ -1,4 +1,4 @@
-modules::import_package('ggplot2', attach = TRUE)
+gg = modules::import_package('ggplot2', attach = TRUE)
 
 theme = theme_bw() +
     theme(strip.background = element_blank(),
@@ -9,3 +9,6 @@ theme = theme_bw() +
           legend.title = element_blank())
 
 theme_set(theme)
+
+scale_color_discrete = function ()
+    gg$scale_color_grey()
