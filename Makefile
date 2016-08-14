@@ -211,15 +211,16 @@ data/taginfo/tail-mod-summary.tsv: data/taginfo/all-tailinfo.tsv
 .PHONY: summaries
 summaries: data/taginfo/poly-a-summary.tsv data/taginfo/tail-mod-summary.tsv
 
-plots = data/plots/global-poly-a-lengths.pdf \
+plots = data/plots/uninfected-poly-a-lengths.pdf \
+		data/plots/infected-poly-a-lengths.pdf \
 		data/plots/viral-poly-u-lengths.pdf
 
 .PHONY: plots
 plots: ${plots}
 
-data/plots/global-poly-a-lengths.pdf: data/taginfo/poly-a-summary.tsv
+data/plots/%-poly-a-lengths.pdf: data/taginfo/all-taginfo.tsv
 	mkdir -p "$(dir $@)"
-	./scripts/plot-global-poly-a-lenghts --plot '$@' '$<'
+	./scripts/plot-global-poly-a-lenghts --plot '$@' --treatment '$*' '$<'
 
 data/plots/viral-poly-u-lengths.pdf: data/taginfo/tail-mod-summary.tsv
 	mkdir -p "$(dir $@)"
