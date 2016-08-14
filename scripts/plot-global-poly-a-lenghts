@@ -42,7 +42,7 @@ sys$run({
         labs(x = 'poly(a) length', y = 'read density (arb. unit)') +
         scale_color_discrete()
 
-    ggsave(args$plot, p, width = 5, height = 4)
+    ggsave(args$plot, p, width = 4, height = 3)
 })
 
 # vim: ft=r
