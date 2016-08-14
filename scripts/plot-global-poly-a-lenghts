@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 sys = modules::import('klmr/sys')
+modules::import('klmr/functional/lambda')
 
 clamp = function (x, min, max)
     pmin(pmax(x, min), max)
@@ -8,8 +9,13 @@ clamp = function (x, min, max)
 predict.density = function (object, x, ...)
     approx(object$x, object$y, x, ...)
 
+capitalize = function (str)
+    paste0(toupper(substr(str, 1, 1)), substr(str, 2, nchar(str)))
+
 sys$run({
     args = sys$cmd$parse(arg('taginfo', 'taginfo input file'),
+                         opt('t', 'treatment', 'which treatment (infected, uninfected)',
+                             validate = x -> x %in% c('infected', 'uninfected')),
                          opt('o', 'plot', 'plot output filename'))
 
     io = modules::import('ebi-predocs/ebits/io')
@@ -26,7 +32,7 @@ sys$run({
         mutate(palen = clamp(palen, 0, 80))
 
     taginfo_density = taginfo %>%
-        filter(Treatment == 'Uninfected') %>%
+        filter(Treatment == capitalize(args$treatment)) %>%
         group_by(Type, Sample) %>%
         do(as_data_frame(predict(density(.$palen, from = 0, to = 80, width = 6), 0 : 80))) %>%
         group_by(Type, x) %>%
