@@ -3,6 +3,12 @@
 sys = modules::import('klmr/sys')
 modules::import('klmr/functional/lambda')
 
+clamp = function (x, min, max)
+    pmin(pmax(x, min), max)
+
+predict.density = function (object, x, ...)
+    approx(object$x, object$y, x, ...)
+
 sys$run({
     args = sys$cmd$parse(arg('taginfo', 'taginfo input file'),
                          opt('o', 'plot', 'plot output filename'))
@@ -15,26 +21,26 @@ sys$run({
     modules::import('./runmean', attach = TRUE)
     modules::import('./theme', attach = TRUE)
 
-    lengths = io$read_table(args$summary, header = TRUE) %>%
-        filter(Treatment == 'Uninfected', Source == 'host') %>%
-        select(-Treatment, -Source)
+    taginfo = io$read_table(args$taginfo, header = TRUE, na.strings = NA) %>%
+        filter(! grepl('ORV-RNA[12]', Gene)) %>%
+        rename(palen = `pA length`) %>%
+        mutate(palen = clamp(palen, 0, 80))
 
-    length_ranges = lengths %>%
-        filter(`pA length` > 0) %>%
-        select(-Count) %>%
-        tidyr$spread(Sample, Frequency) %>%
-        mutate_at(vars(`1`, `2`), . -> runmean(., 5)) %>%
-        mutate(Frequency = (`1` + `2`) / 2)
+    taginfo_density = taginfo %>%
+        filter(Treatment == 'Uninfected') %>%
+        group_by(Type, Sample) %>%
+        do(as_data_frame(predict(density(.$palen, from = 0, to = 80, width = 6), 0 : 80))) %>%
+        group_by(Type, x) %>%
+        mutate(ymin = min(y), ymax = max(y), y = mean(y))
 
-    p = ggplot(length_ranges) +
-        aes(`pA length`, runmean(Frequency, 5), color = Type) +
-        geom_line(size = 1) +
-        geom_linerange(aes(ymin = runmean(`1`, 5), ymax = runmean(`2`, 5)),
-                       alpha = 0.5) +
-        scale_x_continuous(limits = c(0, 80),
-                           breaks = c(1, seq(20, 80, by = 20))) +
-        labs(x = 'poly­A length', y = 'Fraction of reads (running mean)',
-             color = 'Type')
+    p = ggplot(taginfo_density) +
+        aes(x, y, color = type) +
+        geom_linerange(aes(ymin = ymin, ymax = ymax), size = 0.5, alpha = 0.25) +
+        geom_line() +
+        geom_point(size = 0.5, color = 'white') +
+        geom_point(size = 0.1) +
+        labs(x = 'poly(a) length', y = 'read density (arb. unit)') +
+        scale_color_discrete()
 
     ggsave(args$plot, p, width = 5, height = 4)
 })
