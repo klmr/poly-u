@@ -33,7 +33,7 @@ sys$run({
         mutate(ymin = min(y), ymax = max(y), y = mean(y))
 
     p = ggplot(taginfo_density) +
-        aes(x, y, color = type) +
+        aes(x, y, color = Type) +
         geom_linerange(aes(ymin = ymin, ymax = ymax), size = 0.5, alpha = 0.25) +
         geom_line() +
         geom_point(size = 0.5, color = 'white') +
