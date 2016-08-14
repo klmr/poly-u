@@ -4,15 +4,16 @@ sys = modules::import('klmr/sys')
 modules::import('klmr/functional/lambda')
 
 sys$run({
-    args = sys$cmd$parse(arg('summary', 'summary table input file'),
+    args = sys$cmd$parse(arg('taginfo', 'taginfo input file'),
                          opt('o', 'plot', 'plot output filename'))
 
     io = modules::import('ebi-predocs/ebits/io')
     modules::import_package('dplyr', attach = TRUE)
     modules::import_package('ggplot2', attach = TRUE)
     tidyr = modules::import_package('tidyr')
+    modules::import('./mutate_when', attach = TRUE)
     modules::import('./runmean', attach = TRUE)
-    modules::import('./theme')
+    modules::import('./theme', attach = TRUE)
 
     lengths = io$read_table(args$summary, header = TRUE) %>%
         filter(Treatment == 'Uninfected', Source == 'host') %>%
