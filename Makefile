@@ -177,14 +177,14 @@ aligned-taginfo := $(subst /genes/,/taginfo/aligned/,${find-genes})
 .PHONY: aligned-taginfo
 aligned-taginfo: ${aligned-taginfo}
 
-trimmed-fastq_r3 = $(subst /genes/,/trimmed/,${1:.tsv=_R3.fastq.gz})
+# trimmed-fastq_r3 = $(subst /genes/,/trimmed/,${1:.tsv=_R3.fastq.gz})
 
-data/taginfo/aligned/%.tsv: data/genes/%.tsv ${infected-reference} ${infected-gene-annotation}
-	mkdir -p "$(dir $@)"
-	${bsub} -n 16 -M 24000 -R 'span[hosts=1] select[mem>24000] rusage[mem=24000]' \
-		"./scripts/3p-align --reference '${infected-reference}' \
-		--annotation '${infected-gene-annotation}' \
-		--genes '$<' --ncores 16 '$(call trimmed-fastq_r3,$<)' > '$@'"
+# data/taginfo/aligned/%.tsv: data/genes/%.tsv ${infected-reference} ${infected-gene-annotation}
+# 	mkdir -p "$(dir $@)"
+# 	${bsub} -n 16 -M 24000 -R 'span[hosts=1] select[mem>24000] rusage[mem=24000]' \
+# 		"./scripts/3p-align --reference '${infected-reference}' \
+# 		--annotation '${infected-gene-annotation}' \
+# 		--genes '$<' --ncores 16 '$(call trimmed-fastq_r3,$<)' > '$@'"
 
 taginfo = $(subst /genes/,/taginfo/,${find-genes})
 
