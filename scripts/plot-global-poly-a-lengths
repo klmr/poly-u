@@ -1,0 +1,53 @@
+#!/usr/bin/env Rscript
+
+sys = modules::import('klmr/sys')
+modules::import('klmr/functional/lambda')
+
+clamp = function (x, min, max)
+    pmin(pmax(x, min), max)
+
+predict.density = function (object, x, ...)
+    approx(object$x, object$y, x, ...)
+
+capitalize = function (str)
+    paste0(toupper(substr(str, 1, 1)), substr(str, 2, nchar(str)))
+
+sys$run({
+    args = sys$cmd$parse(arg('taginfo', 'taginfo input file'),
+                         opt('t', 'treatment', 'which treatment (infected, uninfected)',
+                             validate = x -> x %in% c('infected', 'uninfected')),
+                         opt('o', 'plot', 'plot output filename'))
+
+    io = modules::import('ebi-predocs/ebits/io')
+    modules::import_package('dplyr', attach = TRUE)
+    modules::import_package('ggplot2', attach = TRUE)
+    tidyr = modules::import_package('tidyr')
+    modules::import('./runmean', attach = TRUE)
+    modules::import('./theme', attach = TRUE)
+
+    taginfo = io$read_table(args$taginfo, header = TRUE, na.strings = NA) %>%
+        filter(! grepl('ORV-RNA[12]', Gene)) %>%
+        rename(palen = `pA length`) %>%
+        mutate(palen = clamp(palen, 0, 80))
+
+    taginfo_density = taginfo %>%
+        filter(Treatment == capitalize(args$treatment)) %>%
+        group_by(Type, Sample) %>%
+        do(as_data_frame(predict(density(.$palen, from = 0, to = 80, width = 6), 0 : 80))) %>%
+        group_by(Type, x) %>%
+        summarize(ymin = min(y), ymax = max(y), y = mean(y)) %>%
+        ungroup()
+
+    p = ggplot(taginfo_density) +
+        aes(x, y, color = Type) +
+        geom_linerange(aes(ymin = ymin, ymax = ymax), size = 0.5, alpha = 0.25) +
+        geom_line() +
+        geom_point(size = 0.5, color = 'white') +
+        geom_point(size = 0.1) +
+        labs(x = 'Poly(a) length', y = 'Read density (arb. unit)') +
+        scale_color_discrete()
+
+    ggsave(args$plot, p, width = 4, height = 3)
+})
+
+# vim: ft=r
