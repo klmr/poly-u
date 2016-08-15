@@ -131,6 +131,9 @@ data/softclip-mapped/%.bam: data/trimmed/%_R5.fastq.gz ${infected-index}
 		--outSAMtype BAM Unsorted --outFileNamePrefix '$(basename $@)'"
 	mv "$(basename $@)Aligned.out.bam" "$(basename $@).bam"
 
+softclip-indexed = $(subst /mapped/,/softclip-mapped/,${mapped-reads:.bam=-sorted.bam.bai})
+.SECONDARY: ${softclip-indexed}
+
 data/softclip-mapped/%-sorted.bam.bai: data/softclip-mapped/%.bam
 	samtools sort -o "$(basename $@)" "$<"
 	samtools index "$(basename $@)"
@@ -141,6 +144,12 @@ data/softclip-mapped/%-sorted.bam.bai: data/softclip-mapped/%.bam
 # reference.
 
 find-reads_3p = raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(notdir $1)_R3.fastq.gz
+viral-correction = $(subst /mapped/,/viral/,${mapped-reads:.bam=.tsv})
+
+.PHONY: viral-correction
+viral-correction: ${viral-correction}
+
+.SECONDARY: ${viral-correction}
 
 data/mapped/viral/%.tsv: data/softclip-mapped/%-sorted.bam data/softclip-mapped/%-sorted.bam.bai ${viral-reference}
 	mkdir -p "$(dir $@)"
