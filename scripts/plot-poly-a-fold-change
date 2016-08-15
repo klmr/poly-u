@@ -28,8 +28,7 @@ sys$run({
 
     tailinfo = io$read_table(args$tailinfo, header = TRUE, na.strings = NA) %>%
         filter(Source == 'host') %>%
-        rename(palen = `pA length`) %>%
-        mutate(palen = clamp(palen, 0, 80))
+        mutate(palen = clamp(`pA length`, 0, 80))
 
     tail_fc = tailinfo %>%
         group_by(Type, Treatment, Gene, Sample) %>%
@@ -45,22 +44,18 @@ sys$run({
                                   filter(tail_fc, Germline) %>% mutate(Geneset = 'Germline'),
                                   filter(tail_fc, InfectionResponse) %>% mutate(Geneset = 'Infection response'))
 
-    ggplot(extended_tail_fc) +
-        aes(Geneset, log2FC) +
-        geom_boxplot()
+    p = ggplot(extended_tail_fc) +
+        aes(Geneset, log2FC, color = Geneset) +
+        geom_jitter(width = 0.25, size = 0.5, alpha = 0.25) +
+        geom_boxplot(outlier.color = NA, width = 0.5, color = 'gray20') +
+        guides(color = FALSE) +
+        labs(y = expression(log[2]('fold change'))) +
+        scale_x_discrete(labels = c('All', 'Germline', 'Infection\nresponse'),
+                         limits = c('All', 'Germline', 'Infection response')) +
+        scale_color_manual(values = c('gray50', 'tomato', 'cornflowerblue'),
+                           limits = c('All', 'Germline', 'Infection response'))
 
-    gene_data = tailinfo %>%
-        mutate(pulen = ifelse(Mod == 'T', ModLength, 0)) %>%
-        group_by(Type, Treatment, Gene) %>%
-        summarize(palen = weighted.mean(palen, Support),
-                  pulen = weighted.mean(pulen, Support))
-
-    plot_data = gene_data %>%
-        tidyr$gather(Tail, Length, palen, pulen) %>%
-        mutate(Tail = toupper(sub('^p(.)len$', '\\1', Tail))) %>%
-        ungroup() %>%
-        # Missing values imply zero length due to lack of data supporting any other call.
-        tidyr$spread(Type, Length, fill = 0)
+    ggsave(args$plot, p, width = 3, height = 3)
 })
 
 # vim: ft=r
