@@ -22,7 +22,6 @@ sys$run({
     modules::import_package('dplyr', attach = TRUE)
     modules::import_package('ggplot2', attach = TRUE)
     tidyr = modules::import_package('tidyr')
-    modules::import('./runmean', attach = TRUE)
     modules::import('./theme', attach = TRUE)
 
     taginfo = io$read_table(args$taginfo, header = TRUE, na.strings = NA) %>%
