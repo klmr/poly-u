@@ -49,7 +49,7 @@ sys$run({
         geom_jitter(width = 0.25, size = 0.5, alpha = 0.25) +
         geom_boxplot(outlier.color = NA, width = 0.5, color = 'gray20') +
         guides(color = FALSE) +
-        labs(y = expression(log[2]('fold change'))) +
+        labs(x = 'Gene set', y = expression(log[2]('fold change'))) +
         scale_x_discrete(labels = c('All', 'Germline', 'Infection\nresponse'),
                          limits = c('All', 'Germline', 'Infection response')) +
         scale_color_manual(values = c('gray50', 'tomato', 'cornflowerblue'),
