@@ -13,7 +13,7 @@ capitalize = function (str)
     paste0(toupper(substr(str, 1, 1)), substr(str, 2, nchar(str)))
 
 sys$run({
-    args = sys$cmd$parse(arg('taginfo', 'taginfo input file'),
+    args = sys$cmd$parse(arg('tailinfo', 'tailinfo input file'),
                          opt('t', 'treatment', 'which treatment (infected, uninfected)',
                              validate = x -> x %in% c('infected', 'uninfected')),
                          opt('g', 'germline', 'the germline enriched gene list'),
@@ -30,18 +30,18 @@ sys$run({
     germline_genes = io$read_table(args$germline, header = TRUE)[[1]]
     infection_response_genes = io$read_table(args$infection_response, header = TRUE)[[1]]
 
-    taginfo = io$read_table(args$taginfo, header = TRUE, na.strings = NA) %>%
+    tailinfo = io$read_table(args$tailinfo, header = TRUE, na.strings = NA) %>%
         filter(! grepl('ORV-RNA[12]', Gene)) %>%
         rename(palen = `pA length`) %>%
         mutate(palen = clamp(palen, 0, 80)) %>%
         mutate(Germline = Gene %in% germline_genes,
                InfectionResponse = Gene %in% infection_response_genes)
 
-    extended_taginfo = bind_rows(mutate(taginfo, Geneset = 'All'),
-                                 filter(taginfo, Germline) %>% mutate(Geneset = 'Germline'),
-                                 filter(taginfo, InfectionResponse) %>% mutate(Geneset = 'Infection response'))
+    extended_tailinfo = bind_rows(mutate(tailinfo, Geneset = 'All'),
+                                  filter(tailinfo, Germline) %>% mutate(Geneset = 'Germline'),
+                                  filter(tailinfo, InfectionResponse) %>% mutate(Geneset = 'Infection response'))
 
-    taginfo_density = extended_taginfo %>%
+    tailinfo_density = extended_tailinfo %>%
         filter(Treatment == capitalize(args$treatment)) %>%
         group_by(Type, Geneset, Sample) %>%
         do(as_data_frame(predict(density(.$palen, from = 0, to = 80, width = 6), 0 : 80))) %>%
@@ -49,15 +49,15 @@ sys$run({
         summarize(ymin = min(y), ymax = max(y), y = mean(y)) %>%
         ungroup()
 
-    background_taginfo = taginfo_density %>%
+    background_tailinfo = tailinfo_density %>%
         filter(Geneset == 'All') %>%
         select(-Geneset)
 
-    p = ggplot(filter(taginfo_density, Geneset != 'All')) +
+    p = ggplot(filter(tailinfo_density, Geneset != 'All')) +
         aes(x, y, color = Type) +
         geom_linerange(aes(ymin = ymin, ymax = ymax, linetype = Type),
-                       data = background_taginfo, size = 0.5, color = 'gray50') +
-        geom_line(aes(x, y, linetype = Type), data = background_taginfo, color = 'gray50') +
+                       data = background_tailinfo, size = 0.5, color = 'gray50') +
+        geom_line(aes(x, y, linetype = Type), data = background_tailinfo, color = 'gray50') +
         geom_linerange(aes(ymin = ymin, ymax = ymax), size = 0.5, alpha = 0.25) +
         geom_line() +
         facet_wrap(~ Geneset) +

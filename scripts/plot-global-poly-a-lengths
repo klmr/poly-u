@@ -13,7 +13,7 @@ capitalize = function (str)
     paste0(toupper(substr(str, 1, 1)), substr(str, 2, nchar(str)))
 
 sys$run({
-    args = sys$cmd$parse(arg('taginfo', 'taginfo input file'),
+    args = sys$cmd$parse(arg('tailinfo', 'tailinfo input file'),
                          opt('t', 'treatment', 'which treatment (infected, uninfected)',
                              validate = x -> x %in% c('infected', 'uninfected')),
                          opt('o', 'plot', 'plot output filename'))
@@ -24,12 +24,12 @@ sys$run({
     tidyr = modules::import_package('tidyr')
     modules::import('./theme', attach = TRUE)
 
-    taginfo = io$read_table(args$taginfo, header = TRUE, na.strings = NA) %>%
+    tailinfo = io$read_table(args$tailinfo, header = TRUE, na.strings = NA) %>%
         filter(! grepl('ORV-RNA[12]', Gene)) %>%
         rename(palen = `pA length`) %>%
         mutate(palen = clamp(palen, 0, 80))
 
-    taginfo_density = taginfo %>%
+    tailinfo_density = tailinfo %>%
         filter(Treatment == capitalize(args$treatment)) %>%
         group_by(Type, Sample) %>%
         do(as_data_frame(predict(density(.$palen, from = 0, to = 80, width = 6), 0 : 80))) %>%
@@ -37,7 +37,7 @@ sys$run({
         summarize(ymin = min(y), ymax = max(y), y = mean(y)) %>%
         ungroup()
 
-    p = ggplot(taginfo_density) +
+    p = ggplot(tailinfo_density) +
         aes(x, y, color = Type) +
         geom_linerange(aes(ymin = ymin, ymax = ymax), size = 0.5, alpha = 0.25) +
         geom_line() +

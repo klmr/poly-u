@@ -227,11 +227,11 @@ plots = data/plots/uninfected-poly-a-lengths-density.pdf \
 .PHONY: plots
 plots: ${plots}
 
-data/plots/%-poly-a-lengths-density.pdf: data/taginfo/all-taginfo.tsv
+data/plots/%-poly-a-lengths-density.pdf: data/taginfo/all-tailinfo.tsv
 	mkdir -p "$(dir $@)"
 	./scripts/plot-global-poly-a-lengths --plot '$@' --treatment '$*' '$<'
 
-data/plots/%-poly-a-lengths-gene-sets-density.pdf: data/taginfo/all-taginfo.tsv
+data/plots/%-poly-a-lengths-gene-sets-density.pdf: data/taginfo/all-tailinfo.tsv
 	mkdir -p "$(dir $@)"
 	./scripts/plot-poly-a-gene-sets --plot '$@' --treatment '$*' \
 		--germline 'raw/Germline enriched genes from Reinke et al 2004 supp fig1.tsv' \
