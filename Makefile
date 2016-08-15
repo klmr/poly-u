@@ -143,7 +143,6 @@ data/softclip-mapped/%-sorted.bam.bai: data/softclip-mapped/%.bam
 # that their 3p tails actually align well to the 3p end of the viral RNA
 # reference.
 
-find-reads_3p = raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(notdir $1)_R3.fastq.gz
 viral-correction = $(subst /mapped/,/viral/,${mapped-reads:.bam=.tsv})
 
 .PHONY: viral-correction
@@ -151,14 +150,11 @@ viral-correction: ${viral-correction}
 
 .SECONDARY: ${viral-correction}
 
-data/mapped/viral/%.tsv: data/softclip-mapped/%-sorted.bam data/softclip-mapped/%-sorted.bam.bai ${viral-reference}
+data/viral/%.tsv: data/softclip-mapped/%-sorted.bam.bai data/trimmed/%_R3.fastq.gz ${viral-reference}
 	mkdir -p "$(dir $@)"
-	samtools view '$<' ORV-RNA1 ORV-RNA2 | cut -f1,3 > '$(basename $@).id'
-	${bsub} "./scripts/verify-3p-mapping \
-		--fastq '$(call find-reads_3p,$*)' \
-		--reference '${viral-reference}' \
-		'$(basename $@).id' \
-		> '$@'"
+	samtools view '${<:.bai=}' ORV-RNA1 ORV-RNA2 | cut -f1,3 > '$(basename $@).id'
+	${bsub} "./scripts/verify-3p-mapping --fastq '$(word 2,$^)' \
+		--reference '$(lastword $^)' '$(basename $@).id' > '$@'"
 	rm -f '$(basename $@).id'
 
 ${gene-annotation}: ${annotation}
@@ -195,11 +191,11 @@ taginfo = $(subst /genes/,/taginfo/,${find-genes})
 .PHONY: taginfo
 taginfo: ${taginfo}
 
-data/taginfo/%.tsv: data/genes/%.tsv $$(call find-reads_3p,%)
+data/taginfo/%.tsv: data/genes/%.tsv data/trimmed/%_R3.fastq.gz data/viral/%.tsv
 	mkdir -p "$(dir $@)"
 	${bsub} -M 16000 -R'select[mem>16000] rusage[mem=16000]' \
 		"./scripts/merge-taginfo \
-		--genes '$(firstword $+)' --reads '$(lastword $+)' > '$@'"
+		--genes '$<' --reads '$(word 2,$^)' --viral '$(lastword $^)' > '$@'"
 
 .PHONY: merged-taginfo
 merged-taginfo: data/taginfo/all-tailinfo.tsv
