@@ -131,6 +131,9 @@ data/softclip-mapped/%.bam: data/trimmed/%_R5.fastq.gz ${infected-index}
 		--outSAMtype BAM Unsorted --outFileNamePrefix '$(basename $@)'"
 	mv "$(basename $@)Aligned.out.bam" "$(basename $@).bam"
 
+softclip-indexed = $(subst /mapped/,/softclip-mapped/,${mapped-reads:.bam=-sorted.bam.bai})
+.SECONDARY: ${softclip-indexed}
+
 data/softclip-mapped/%-sorted.bam.bai: data/softclip-mapped/%.bam
 	samtools sort -o "$(basename $@)" "$<"
 	samtools index "$(basename $@)"
@@ -140,16 +143,18 @@ data/softclip-mapped/%-sorted.bam.bai: data/softclip-mapped/%.bam
 # that their 3p tails actually align well to the 3p end of the viral RNA
 # reference.
 
-find-reads_3p = raw/$(shell grep --only-matching c_elegans_.. <<< "$1")/fastq/$(notdir $1)_R3.fastq.gz
+viral-correction = $(subst /mapped/,/viral/,${mapped-reads:.bam=.tsv})
 
-data/mapped/viral/%.tsv: data/softclip-mapped/%-sorted.bam data/softclip-mapped/%-sorted.bam.bai ${viral-reference}
+.PHONY: viral-correction
+viral-correction: ${viral-correction}
+
+.SECONDARY: ${viral-correction}
+
+data/viral/%.tsv: data/softclip-mapped/%-sorted.bam.bai data/trimmed/%_R3.fastq.gz ${viral-reference}
 	mkdir -p "$(dir $@)"
-	samtools view '$<' ORV-RNA1 ORV-RNA2 | cut -f1,3 > '$(basename $@).id'
-	${bsub} "./scripts/verify-3p-mapping \
-		--fastq '$(call find-reads_3p,$*)' \
-		--reference '${viral-reference}' \
-		'$(basename $@).id' \
-		> '$@'"
+	samtools view '${<:.bai=}' ORV-RNA1 ORV-RNA2 | cut -f1,3 > '$(basename $@).id'
+	${bsub} "./scripts/verify-3p-mapping --fastq '$(word 2,$^)' \
+		--reference '$(lastword $^)' '$(basename $@).id' > '$@'"
 	rm -f '$(basename $@).id'
 
 ${gene-annotation}: ${annotation}
@@ -172,25 +177,25 @@ aligned-taginfo := $(subst /genes/,/taginfo/aligned/,${find-genes})
 .PHONY: aligned-taginfo
 aligned-taginfo: ${aligned-taginfo}
 
-trimmed-fastq_r3 = $(subst /genes/,/trimmed/,${1:.tsv=_R3.fastq.gz})
+# trimmed-fastq_r3 = $(subst /genes/,/trimmed/,${1:.tsv=_R3.fastq.gz})
 
-data/taginfo/aligned/%.tsv: data/genes/%.tsv ${infected-reference} ${infected-gene-annotation}
-	mkdir -p "$(dir $@)"
-	${bsub} -n 16 -M 24000 -R 'span[hosts=1] select[mem>24000] rusage[mem=24000]' \
-		"./scripts/3p-align --reference '${infected-reference}' \
-		--annotation '${infected-gene-annotation}' \
-		--genes '$<' --ncores 16 '$(call trimmed-fastq_r3,$<)' > '$@'"
+# data/taginfo/aligned/%.tsv: data/genes/%.tsv ${infected-reference} ${infected-gene-annotation}
+# 	mkdir -p "$(dir $@)"
+# 	${bsub} -n 16 -M 24000 -R 'span[hosts=1] select[mem>24000] rusage[mem=24000]' \
+# 		"./scripts/3p-align --reference '${infected-reference}' \
+# 		--annotation '${infected-gene-annotation}' \
+# 		--genes '$<' --ncores 16 '$(call trimmed-fastq_r3,$<)' > '$@'"
 
 taginfo = $(subst /genes/,/taginfo/,${find-genes})
 
 .PHONY: taginfo
 taginfo: ${taginfo}
 
-data/taginfo/%.tsv: data/genes/%.tsv $$(call find-reads_3p,%)
+data/taginfo/%.tsv: data/genes/%.tsv data/trimmed/%_R3.fastq.gz data/viral/%.tsv
 	mkdir -p "$(dir $@)"
-	${bsub} -M 12000 -R'select[mem>12000] rusage[mem=12000]' \
+	${bsub} -M 16000 -R'select[mem>16000] rusage[mem=16000]' \
 		"./scripts/merge-taginfo \
-		--genes '$(firstword $+)' --reads '$(lastword $+)' > '$@'"
+		--genes '$<' --reads '$(word 2,$^)' --viral '$(lastword $^)' > '$@'"
 
 .PHONY: merged-taginfo
 merged-taginfo: data/taginfo/all-tailinfo.tsv

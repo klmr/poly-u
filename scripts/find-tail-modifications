@@ -42,7 +42,10 @@ sys$run({
     tailinfo = taginfo %>%
         do(modifications(.$Mod)) %>%
         bind_cols(select(taginfo, -Mod), .) %>%
-        filter(Mod != 'N')
+        filter(Mod != 'N') %>%
+        # For the host cell, only consider polyadenylated genes; the rest is due
+        # to degradataion and/or fragmentation.
+        filter(Source != 'host' | `pA length` > 0)
 
     io$write_table(tailinfo, stdout(), sep = '\t')
 })
