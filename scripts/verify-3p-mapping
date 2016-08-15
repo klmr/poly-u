@@ -9,6 +9,7 @@ sys$run({
 
     io = modules::import('ebi-predocs/ebits/io')
     modules::import_package('dplyr', attach = TRUE)
+    tidyr = modules::import_package('tidyr')
     bios = modules::import_package('Biostrings')
     sr = modules::import_package('ShortRead')
     modules::import('klmr/functional/lambda')
@@ -23,10 +24,11 @@ sys$run({
         seq_3p = sr$readFastq(args$fastq)
 
         io$read_table(args$reads, sep = '\t') %>%
-            select(ID = 1, Reference = 2) %>%
-            mutate(Tail = reference[Reference],
+            select(ID = 1, Gene = 2) %>%
+            mutate(Tail = reference[Gene],
                    SeqPos = match(ID, as.character(sr$id(seq_3p))),
                    Read = as.character(sr$sread(seq_3p[SeqPos]))) %>%
+            tidyr$separate(ID, c('Tile', 'ID', 'Flags', 'Support', 'pA length', 'Mod'), ':') %>%
             select(-SeqPos)
     })
 
@@ -52,10 +54,10 @@ sys$run({
     results = reads %>%
         mutate(TailEndPos = regexpr_fuzzy(Tail, Read)) %>%
         filter(TailEndPos != -1) %>%
-        mutate(Tail = revcomp(substr(Read, 1, TailEndPos - 1))) %>%
+        mutate(Mod = revcomp(substr(Read, 1, TailEndPos - 1))) %>%
         mutate(`pA length` = pmax(attr(regexpr('^A+', Tail), 'match.length'), 0L)) %>%
-        mutate_when(`pA length` > 0, Tail = substr(Tail, `pA length` + 1, nchar(Tail))) %>%
-        select(-Read, -TailEndPos)
+        mutate_when(`pA length` > 0, Mod = substr(Mod, `pA length` + 1, nchar(Mod))) %>%
+        select(-Read, -Tail, -TailEndPos)
 
     io$write_table(results, stdout(), sep = '\t')
 })
