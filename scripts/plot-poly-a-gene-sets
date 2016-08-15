@@ -1,31 +1,68 @@
-args = list(taginfo = 'data/taginfo/all-taginfo.tsv')
+#!/usr/bin/env Rscript
 
-io = modules::import('ebi-predocs/ebits/io')
-modules::import_package('dplyr', attach = TRUE)
-modules::import('./mutate_when', attach = TRUE)
-modules::import('./theme')
-modules::import_package('ggplot2', attach = TRUE)
+sys = modules::import('klmr/sys')
+modules::import('klmr/functional/lambda')
 
 clamp = function (x, min, max)
     pmin(pmax(x, min), max)
 
-taginfo = io$read_table(args$taginfo, header = TRUE, na.strings = NA) %>%
-    filter(! grepl('ORV-RNA[12]', Gene)) %>%
-    rename(palen = `pA length`) %>%
-    mutate(palen = clamp(palen, 0, 80))
+predict.density = function (object, x, ...)
+    approx(object$x, object$y, x, ...)
 
-taginfo_summary = taginfo %>%
-    group_by(Type, Treatment, Sample, palen) %>%
-    summarize(Count = sum(Support)) %>%
-    mutate(Freq = Count / sum(Count)) %>%
-    ungroup()
+capitalize = function (str)
+    paste0(toupper(substr(str, 1, 1)), substr(str, 2, nchar(str)))
 
-ggplot(taginfo_summary) +
-    aes(palen, Freq, color = paste(Type, Treatment), linetype = as.factor(Sample)) +
-    geom_line()
+sys$run({
+    args = sys$cmd$parse(arg('taginfo', 'taginfo input file'),
+                         opt('t', 'treatment', 'which treatment (infected, uninfected)',
+                             validate = x -> x %in% c('infected', 'uninfected')),
+                         opt('g', 'germline', 'the germline enriched gene list'),
+                         opt('i', 'infection-response', 'the infection response gene list'),
+                         opt('o', 'plot', 'plot output filename'))
 
-ggplot(taginfo) +
-    aes(palen, ..density.., color = paste(Type, Treatment)) +
-    geom_freqpoly(binwidth = 6)
+    io = modules::import('ebi-predocs/ebits/io')
+    modules::import_package('dplyr', attach = TRUE)
+    tidyr = modules::import_package('tidyr')
+    modules::import('./theme', attach = TRUE)
+    modules::import_package('ggplot2', attach = TRUE)
+    modules::import('./runmean', attach = TRUE)
+
+    germline_genes = io$(args$germline, header = TRUE)[[1]]
+    infection_response_genes = io$read_table(args$infection_response, header = TRUE)[[1]]
+
+    taginfo = io$read_table(args$taginfo, header = TRUE, na.strings = NA) %>%
+        filter(! grepl('ORV-RNA[12]', Gene)) %>%
+        rename(palen = `pA length`) %>%
+        mutate(palen = clamp(palen, 0, 80)) %>%
+        mutate(Germline = Gene %in% germline_genes,
+               InfectionResponse = Gene %in% infection_response_genes)
+
+    extended_taginfo = bind_rows(mutate(taginfo, Geneset = 'All'),
+                                 filter(taginfo, Germline) %>% mutate(Geneset = 'Germline'),
+                                 filter(taginfo, InfectionResponse) %>% mutate(Geneset = 'Infection response'))
+
+    taginfo_density = extended_taginfo %>%
+        filter(Treatment == capitalize(args$treatment)) %>%
+        group_by(Type, Geneset, Sample) %>%
+        do(as_data_frame(predict(density(.$palen, from = 0, to = 80, width = 6), 0 : 80))) %>%
+        group_by(Type, Geneset, x) %>%
+        summarize(ymin = min(y), ymax = max(y), y = mean(y)) %>%
+        ungroup()
+
+    background_taginfo = taginfo_density %>%
+        filter(Geneset == 'All') %>%
+        select(-Geneset)
+
+    p = ggplot(taginfo_density) +
+        aes(x, y, color = Geneset) +
+        geom_linerange(aes(ymin = ymin, ymax = ymax), size = 0.5, alpha = 0.25) +
+        geom_line() +
+        facet_wrap(~ Type) +
+        labs(x = 'Poly(A) length', y = 'Read density (arb. unit)') +
+        scale_color_manual(values = c('tomato', 'cornflowerblue', 'gray50'),
+                           limits = c('Germline', 'Infection response', 'All'))
+
+    ggsave(args$plot, p, width = 7, height = 3)
+})
 
 # vim: ft=r
