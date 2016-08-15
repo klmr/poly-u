@@ -41,8 +41,7 @@ sys$run({
         tidyr$gather(Tail, Length, palen, pulen) %>%
         mutate(Tail = toupper(sub('^p(.)len$', '\\1', Tail))) %>%
         ungroup() %>%
-        # Missing values imply zero length due to lack of data supporting any other call.
-        tidyr$spread(Type, Length, fill = 0)
+        tidyr$spread(Type, Length)
 
     pa_plot = plot_data %>%
         filter(Treatment == capitalize(args$treatment),
