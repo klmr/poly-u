@@ -6,7 +6,8 @@ sys = modules::import('klmr/sys')
 
 sys$run({
     args = sys$cmd$parse(opt('g', 'genes', 'ID–gene name map file'),
-                         opt('r', 'reads', '3ʹ end sequence file'))
+                         opt('r', 'reads', '3ʹ end sequence file'),
+                         opt('v', 'viral', 'viral corrected 3ʹ ends file'))
 
     io = modules::import('ebi-predocs/ebits/io')
     dplyr = modules::import_package('dplyr', attach = TRUE)
@@ -17,7 +18,9 @@ sys$run({
 
     genes = io$read_table(args$genes) %>%
         select(ReadID = 1, Gene = 2) %>%
-        extract(ReadID, c('Tile', 'ID'), '^([^:]+):(\\d+)')
+        extract(ReadID, c('Tile', 'ID'), '^([^:]+):(\\d+)') %>%
+        # Remove viral RNA, use corrected calls instead
+        filter(! grepl('^ORV-', Gene))
 
     # Unfortunately the poly-A tail length reported by tailseeker sometimes, but
     # not always, includes the tail modifications. To fix this we need to
@@ -45,7 +48,8 @@ sys$run({
     taginfo = data_frame(ID = as.character(sr$id(reads))) %>%
         separate(ID, c('Tile', 'ID', 'Flags', 'Support', 'pA length', 'Mod'), ':') %>%
         mutate(Flags = strtoi(Flags, 16),
-               Seq = as.character(sr$sread(reads))) %>%
+               Seq = as.character(sr$sread(reads)),
+               Support = as.integer(Support)) %>%
         # Ignore low quality reads altogether from here on.
         filter(! has_too_many_dark_cycles(Flags)) %>%
         mutate(`pA length` = as.integer(`pA length`),
@@ -73,12 +77,15 @@ sys$run({
 
     merged = inner_join(genes, taginfo, by = c(Tile = 'Tile', ID = 'ID'))
 
+    viral_taginfo = io$read_table(args$viral, header = TRUE, na.strings = NA) %>%
+        select(Support, `pA length`, Mod, Gene)
+
     for_output = merged %>%
         select(-`pA length`, -Seq) %>%
         select(Support, `pA length` = ActualLength, Mod, Gene) %>%
-        mutate(Filename = tools::file_path_sans_ext(basename(args$gene))) %>%
-        extract(Filename, c('Type', 'Treatment', 'Sample'),
-                '([^_]+)_(.*)(\\d+)$')
+        bind_rows(viral_taginfo) %>%
+        mutate(Filename = tools::file_path_sans_ext(basename(args$genes))) %>%
+        extract(Filename, c('Type', 'Treatment', 'Sample'), '([^_]+)_(.*)(\\d+)$')
 
     write.table(for_output, file = stdout(), quote = FALSE, sep = '\t', row.names = FALSE)
 })
