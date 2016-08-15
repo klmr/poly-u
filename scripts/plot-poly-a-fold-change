@@ -1,0 +1,66 @@
+#!/usr/bin/env Rscript
+
+sys = modules::import('klmr/sys')
+modules::import('klmr/functional/lambda')
+
+clamp = function (x, min, max)
+    pmin(pmax(x, min), max)
+
+capitalize = function (str)
+    paste0(toupper(substr(str, 1, 1)), substr(str, 2, nchar(str)))
+
+sys$run({
+    args = sys$cmd$parse(arg('tailinfo', 'tailinfo input file'),
+                         opt('t', 'treatment', 'which treatment (infected, uninfected)',
+                             validate = x -> x %in% c('infected', 'uninfected')),
+                         opt('g', 'germline', 'the germline enriched gene list'),
+                         opt('i', 'infection-response', 'the infection response gene list'),
+                         opt('o', 'plot', 'plot output filename'))
+
+    io = modules::import('ebi-predocs/ebits/io')
+    modules::import_package('dplyr', attach = TRUE)
+    modules::import_package('ggplot2', attach = TRUE)
+    tidyr = modules::import_package('tidyr')
+    modules::import('./theme', attach = TRUE)
+
+    germline_genes = io$read_table(args$germline, header = TRUE)[[1]]
+    infection_response_genes = io$read_table(args$infection_response, header = TRUE)[[1]]
+
+    tailinfo = io$read_table(args$tailinfo, header = TRUE, na.strings = NA) %>%
+        filter(Source == 'host') %>%
+        rename(palen = `pA length`) %>%
+        mutate(palen = clamp(palen, 0, 80))
+
+    tail_fc = tailinfo %>%
+        group_by(Type, Treatment, Gene, Sample) %>%
+        summarize(palen = weighted.mean(palen, Support)) %>%
+        summarize(palen = mean(palen)) %>%
+        mutate(Germline = Gene %in% germline_genes,
+               InfectionResponse = Gene %in% infection_response_genes) %>%
+        ungroup() %>%
+        tidyr$spread(Type, palen) %>%
+        mutate(log2FC = log2(KO) - log2(WT))
+
+    extended_tail_fc = bind_rows(mutate(tail_fc, Geneset = 'All'),
+                                  filter(tail_fc, Germline) %>% mutate(Geneset = 'Germline'),
+                                  filter(tail_fc, InfectionResponse) %>% mutate(Geneset = 'Infection response'))
+
+    ggplot(extended_tail_fc) +
+        aes(Geneset, log2FC) +
+        geom_boxplot()
+
+    gene_data = tailinfo %>%
+        mutate(pulen = ifelse(Mod == 'T', ModLength, 0)) %>%
+        group_by(Type, Treatment, Gene) %>%
+        summarize(palen = weighted.mean(palen, Support),
+                  pulen = weighted.mean(pulen, Support))
+
+    plot_data = gene_data %>%
+        tidyr$gather(Tail, Length, palen, pulen) %>%
+        mutate(Tail = toupper(sub('^p(.)len$', '\\1', Tail))) %>%
+        ungroup() %>%
+        # Missing values imply zero length due to lack of data supporting any other call.
+        tidyr$spread(Type, Length, fill = 0)
+})
+
+# vim: ft=r
