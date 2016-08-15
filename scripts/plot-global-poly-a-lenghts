@@ -35,7 +35,8 @@ sys$run({
         group_by(Type, Sample) %>%
         do(as_data_frame(predict(density(.$palen, from = 0, to = 80, width = 6), 0 : 80))) %>%
         group_by(Type, x) %>%
-        mutate(ymin = min(y), ymax = max(y), y = mean(y))
+        summarize(ymin = min(y), ymax = max(y), y = mean(y)) %>%
+        ungroup()
 
     p = ggplot(taginfo_density) +
         aes(x, y, color = Type) +
