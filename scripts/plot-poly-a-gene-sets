@@ -27,7 +27,7 @@ sys$run({
     modules::import_package('ggplot2', attach = TRUE)
     modules::import('./runmean', attach = TRUE)
 
-    germline_genes = io$(args$germline, header = TRUE)[[1]]
+    germline_genes = io$read_table(args$germline, header = TRUE)[[1]]
     infection_response_genes = io$read_table(args$infection_response, header = TRUE)[[1]]
 
     taginfo = io$read_table(args$taginfo, header = TRUE, na.strings = NA) %>%
