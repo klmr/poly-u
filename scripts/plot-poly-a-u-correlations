@@ -1,0 +1,71 @@
+#!/usr/bin/env Rscript
+
+sys = modules::import('klmr/sys')
+modules::import('klmr/functional/lambda')
+
+clamp = function (x, min, max)
+    pmin(pmax(x, min), max)
+
+capitalize = function (str)
+    paste0(toupper(substr(str, 1, 1)), substr(str, 2, nchar(str)))
+
+scoped = function (guard, expr) {
+    on.exit(guard)
+    expr
+}
+
+sys$run({
+    args = sys$cmd$parse(arg('tailinfo', 'tailinfo input file'),
+                         opt('t', 'treatment', 'which treatment (infected, uninfected)',
+                             validate = x -> x %in% c('infected', 'uninfected')),
+                         opt('o', 'plot', 'plot output filename'))
+
+    io = modules::import('ebi-predocs/ebits/io')
+    modules::import_package('dplyr', attach = TRUE)
+    modules::import_package('ggplot2', attach = TRUE)
+    tidyr = modules::import_package('tidyr')
+    modules::import('./theme', attach = TRUE)
+
+    tailinfo = io$read_table(args$tailinfo, header = TRUE, na.strings = NA) %>%
+        filter(! grepl('ORV-RNA[12]', Gene)) %>%
+        rename(palen = `pA length`) %>%
+        mutate(palen = clamp(palen, 0, 80))
+
+    gene_data = tailinfo %>%
+        mutate(pulen = ifelse(Mod == 'T', ModLength, 0)) %>%
+        group_by(Type, Treatment, Gene) %>%
+        summarize(palen = weighted.mean(palen, Support),
+                  pulen = weighted.mean(pulen, Support))
+
+    plot_data = gene_data %>%
+        tidyr$gather(Tail, Length, palen, pulen) %>%
+        mutate(Tail = toupper(sub('^p(.)len$', '\\1', Tail))) %>%
+        ungroup() %>%
+        # Missing values imply zero length due to lack of data supporting any other call.
+        tidyr$spread(Type, Length, fill = 0)
+
+    pa_plot = plot_data %>%
+        filter(Treatment == capitalize(args$treatment),
+               Tail == 'A') %>%
+        ggplot() +
+        aes(WT, KO) +
+        geom_point(size = 0.1, alpha = 0.25)
+
+    u_plot = plot_data %>%
+        filter(Treatment == capitalize(args$treatment),
+               Tail == 'U') %>%
+        ggplot() +
+        aes(WT, KO) +
+        geom_point(size = 0.1, alpha = 0.25) +
+        scale_x_log10() +
+        scale_y_log10() +
+        labs(x = expression(log[10](WT)), y = expression(log[10](KO)))
+
+    scoped(dev.off(), {
+        pdf(args$plot, width = 4, height = 3)
+        plot(pa_plot)
+        plot(u_plot)
+    })
+})
+
+# vim: ft=r
