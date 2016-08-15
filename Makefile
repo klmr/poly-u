@@ -224,6 +224,8 @@ plots = data/plots/uninfected-poly-a-lengths-density.pdf \
 		data/plots/infected-a-u-scatter.pdf \
 		data/plots/uninfected-poly-a-fold-change-boxplot.pdf \
 		data/plots/infected-poly-a-fold-change-boxplot.pdf \
+		data/plots/uninfected-poly-a-fold-change-boxplot.png \
+		data/plots/infected-poly-a-fold-change-boxplot.png \
 		data/plots/viral-poly-u-lengths.pdf
 
 .PHONY: plots
@@ -244,7 +246,7 @@ data/plots/%-a-u-scatter.pdf: data/taginfo/all-tailinfo.tsv
 	mkdir -p "$(dir $@)"
 	./scripts/plot-poly-a-u-correlations --plot '$@' --treatment '$*' '$<'
 
-data/plots/%-poly-a-fold-change-boxplot.pdf: data/taginfo/all-tailinfo.tsv
+data/plots/%-poly-a-fold-change-boxplot.png data/plots/%-poly-a-fold-change-boxplot.pdf: data/taginfo/all-tailinfo.tsv
 	mkdir -p "$(dir $@)"
 	./scripts/plot-poly-a-fold-change --plot '$@' --treatment '$*' \
 		--germline 'raw/Germline enriched genes from Reinke et al 2004 supp fig1.tsv' \

@@ -44,6 +44,11 @@ sys$run({
                                   filter(tail_fc, Germline) %>% mutate(Geneset = 'Germline'),
                                   filter(tail_fc, InfectionResponse) %>% mutate(Geneset = 'Infection response'))
 
+    unicode_minus = if (tools::file_ext(args$plot) != 'pdf')
+        function (x) sub('^-', '\U2212', format(x))
+    else
+        waiver()
+
     p = ggplot(extended_tail_fc) +
         aes(Geneset, log2FC, color = Geneset) +
         geom_jitter(width = 0.25, size = 0.5, alpha = 0.25) +
@@ -52,10 +57,11 @@ sys$run({
         labs(x = 'Gene set', y = expression(log[2]('fold change'))) +
         scale_x_discrete(labels = c('All', 'Germline', 'Infection\nresponse'),
                          limits = c('All', 'Germline', 'Infection response')) +
+        scale_y_continuous(labels = unicode_minus) +
         scale_color_manual(values = c('gray50', 'tomato', 'cornflowerblue'),
                            limits = c('All', 'Germline', 'Infection response'))
 
-    ggsave(args$plot, p, width = 3, height = 3)
+    ggsave(args$plot, p, width = 3, height = 3, dpi = 1200)
 })
 
 # vim: ft=r
