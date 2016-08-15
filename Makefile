@@ -216,20 +216,20 @@ data/taginfo/tail-mod-summary.tsv: data/taginfo/all-tailinfo.tsv
 .PHONY: summaries
 summaries: data/taginfo/poly-a-summary.tsv data/taginfo/tail-mod-summary.tsv
 
-plots = data/plots/uninfected-poly-a-lengths.pdf \
-		data/plots/infected-poly-a-lengths.pdf \
-		data/plots/uninfected-poly-a-lengths-gene-sets.pdf \
-		data/plots/infected-poly-a-lengths-gene-sets.pdf \
+plots = data/plots/uninfected-poly-a-lengths-density.pdf \
+		data/plots/infected-poly-a-lengths-density.pdf \
+		data/plots/uninfected-poly-a-lengths-gene-sets-density.pdf \
+		data/plots/infected-poly-a-lengths-gene-sets-density.pdf \
 		data/plots/viral-poly-u-lengths.pdf
 
 .PHONY: plots
 plots: ${plots}
 
-data/plots/%-poly-a-lengths.pdf: data/taginfo/all-taginfo.tsv
+data/plots/%-poly-a-lengths-density.pdf: data/taginfo/all-taginfo.tsv
 	mkdir -p "$(dir $@)"
 	./scripts/plot-global-poly-a-lengths --plot '$@' --treatment '$*' '$<'
 
-data/plots/%-poly-a-lengths-gene-sets.pdf: data/taginfo/all-taginfo.tsv
+data/plots/%-poly-a-lengths-gene-sets-density.pdf: data/taginfo/all-taginfo.tsv
 	mkdir -p "$(dir $@)"
 	./scripts/plot-poly-a-gene-sets --plot '$@' --treatment '$*' \
 		--germline 'raw/Germline enriched genes from Reinke et al 2004 supp fig1.tsv' \
