@@ -222,7 +222,7 @@ plots: ${plots}
 
 data/plots/%-poly-a-lengths.pdf: data/taginfo/all-taginfo.tsv
 	mkdir -p "$(dir $@)"
-	./scripts/plot-global-poly-a-lenghts --plot '$@' --treatment '$*' '$<'
+	./scripts/plot-global-poly-a-lengths --plot '$@' --treatment '$*' '$<'
 
 data/plots/%-poly-a-lengths-gene-sets.pdf: data/taginfo/all-taginfo.tsv
 	mkdir -p "$(dir $@)"
