@@ -44,7 +44,7 @@ sys$run({
         geom_line() +
         geom_point(size = 0.5, color = 'white') +
         geom_point(size = 0.1) +
-        labs(x = 'poly(a) length', y = 'read density (arb. unit)') +
+        labs(x = 'Poly(a) length', y = 'Read density (arb. unit)') +
         scale_color_discrete()
 
     ggsave(args$plot, p, width = 4, height = 3)
