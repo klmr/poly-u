@@ -44,30 +44,29 @@ sys$run({
                        right  = FALSE, labels = c('U', 'UU+'))) %>%
         group_by(Source, Type, Sample, U) %>%
         summarize(Count = sum(Support)) %>%
-        mutate(Freq = Count / sum(Count)) %>%
-        group_by(Source, Type, U) %>%
-        summarize(mean = mean(Freq), min = min(Freq), max = max(Freq))
+        mutate(Freq = Count / sum(Count))
 
     # Ensure no category is missing even in the event of no data
     all_combinations = uridylation %>%
         ungroup() %>%
         do(expand.grid(Source = unique(.$Source),
                        Type = unique(.$Type),
+                       Sample = unique(.$Sample),
                        U = unique(.$U))) %>%
         mutate(Source = as.character(Source), Type = as.character(Type))
 
     uridylation_complete = full_join(uridylation, all_combinations,
-                                     by = c('Source', 'Type', 'U'))
-        #mutate_at(c('mean', 'min', 'max'), x -> ifelse(is.na(x), 0, x))
+                                     by = c('Source', 'Type', 'Sample', 'U')) %>%
+        mutate_when(is.na(Freq), Freq = 0)
 
-    dodge = position_dodge(width = 1)
+    dodge = position_dodge(width = 0.5)
 
     p = ggplot(filter(uridylation_complete, ! is.na(U))) +
-        aes(U, 100 * mean, fill = relevel(factor(Type), 'WT')) +
-        geom_bar(stat = 'identity', position = dodge) +
-        geom_errorbar(aes(ymin = 100 * min, ymax = 100 * max), position = dodge,
-                      width = 0.1, color = 'grey20') +
-        labs(x = NULL, y = '% of reads')
+        aes(U, 100 * Freq, color = relevel(factor(Type), 'WT')) +
+        geom_point(position = dodge) +
+        stat_summary(aes(ymin = ..y.., ymax = ..y..), fun.y = mean,
+                     size = 1, width = 0.4, geom = 'errorbar', position = dodge) +
+        labs(x = NULL, y = '% of uridylated transcripts')
 
     if (! is_host)
         p = p + facet_wrap(~ Source, ncol = 2, scales = 'free_y')
