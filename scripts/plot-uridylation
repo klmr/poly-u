@@ -67,7 +67,7 @@ sys$run({
         geom_bar(stat = 'identity', position = dodge) +
         geom_errorbar(aes(ymin = 100 * min, ymax = 100 * max), position = dodge,
                       width = 0.1, color = 'grey20') +
-        labs(x = NULL, y = '% uridylation')
+        labs(x = NULL, y = '% of reads')
 
     if (! is_host)
         p = p + facet_wrap(~ Source, ncol = 2, scales = 'free_y')
