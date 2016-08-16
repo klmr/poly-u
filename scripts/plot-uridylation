@@ -1,0 +1,69 @@
+#!/usr/bin/env Rscript
+
+sys = modules::import('klmr/sys')
+modules::import('klmr/functional/lambda')
+
+capitalize = function (str)
+    paste0(toupper(substr(str, 1, 1)), substr(str, 2, nchar(str)))
+
+sys$run({
+    args = sys$cmd$parse(arg('tailinfo', 'tailinfo input file'),
+                         opt('t', 'treatment', 'which treatment (infected, uninfected)',
+                             validate = x -> x %in% c('infected', 'uninfected')),
+                         opt('w', 'which', 'host or virus (= OrV)?',
+                             validate = x -> tolower(x) %in% c('host', 'orv')),
+                         opt('o', 'plot', 'plot output filename'))
+
+    io = modules::import('ebi-predocs/ebits/io')
+    modules::import_package('dplyr', attach = TRUE)
+    modules::import_package('ggplot2', attach = TRUE)
+    tidyr = modules::import_package('tidyr')
+    modules::import('./mutate_when', attach = TRUE)
+    modules::import('./theme', attach = TRUE)
+
+    is_host = tolower(args$which) == 'host'
+    comparer = if (is_host) `==` else `!=`
+
+    tailinfo = io$read_table(args$tailinfo, header = TRUE, na.strings = NA) %>%
+        filter(comparer(Source, 'host')) %>%
+        mutate(Source = sub('-', '­', Source))
+
+    uridylation = tailinfo %>%
+        filter(Treatment == capitalize(args$treatment)) %>%
+        mutate_when(Mod != 'T', ModLength = 0) %>%
+        mutate(U = cut(ModLength, c(1, 2, Inf), include.lowest = TRUE,
+                       right  = FALSE, labels = c('U', 'UU+'))) %>%
+        group_by(Source, Type, Sample, U) %>%
+        summarize(Count = sum(Support)) %>%
+        mutate(Freq = Count / sum(Count)) %>%
+        group_by(Source, Type, U) %>%
+        summarize(mean = mean(Freq), min = min(Freq), max = max(Freq))
+
+    # Ensure no category is missing even in the event of no data
+    all_combinations = uridylation %>%
+        ungroup() %>%
+        do(expand.grid(Source = unique(.$Source),
+                       Type = unique(.$Type),
+                       U = unique(.$U))) %>%
+        mutate(Source = as.character(Source), Type = as.character(Type))
+
+    uridylation_complete = full_join(uridylation, all_combinations,
+                                     by = c('Source', 'Type', 'U'))
+        #mutate_at(c('mean', 'min', 'max'), x -> ifelse(is.na(x), 0, x))
+
+    dodge = position_dodge(width = 1)
+
+    p = ggplot(filter(uridylation_complete, ! is.na(U))) +
+        aes(U, 100 * mean, fill = relevel(factor(Type), 'WT')) +
+        geom_bar(stat = 'identity', position = dodge) +
+        geom_errorbar(aes(ymin = 100 * min, ymax = 100 * max), position = dodge,
+                      width = 0.1, color = 'grey20') +
+        labs(x = NULL, y = '% uridylation')
+
+    if (! is_host)
+        p = p + facet_wrap(~ Source, ncol = 2, scales = 'free_y')
+
+    ggsave(args$plot, p, width = if (is_host) 3 else 6, height = 3)
+})
+
+# vim: ft=r
