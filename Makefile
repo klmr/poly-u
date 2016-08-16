@@ -261,3 +261,13 @@ data/plots/%-uridylation-barplot.pdf: data/taginfo/all-tailinfo.tsv
 	mkdir -p "$(dir $@)"
 	./scripts/plot-uridylation --plot '$@' --treatment '$(call nth,1,$*)' \
 		--which '$(call nth,2,$*)' '$<'
+
+enrichment = data/go-enrichment-uninfected-short-pa-ko.tsv \
+			 data/go-enrichment-infected-short-pa-ko.tsv
+
+.PHONY: enrichment
+enrichment: ${enrichment}
+
+data/go-enrichment-%-short-pa-ko.tsv: data/taginfo/all-tailinfo.tsv
+	mkdir -p "$(dir $@)"
+	./scripts/short-tail-enrichment --treatment '$*' '$<' > '$@'
