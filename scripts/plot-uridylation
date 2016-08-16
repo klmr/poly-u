@@ -24,9 +24,13 @@ sys$run({
     is_host = tolower(args$which) == 'host'
     comparer = if (is_host) `==` else `!=`
 
+    protein_coding_genes = c(readLines('raw/protein-coding-genes.txt'),
+                             'ORV-RNA1', 'ORV-RNA2')
+
     tailinfo = io$read_table(args$tailinfo, header = TRUE, na.strings = NA) %>%
         filter(comparer(Source, 'host')) %>%
-        mutate(Source = sub('-', '­', Source))
+        mutate(Source = sub('-', '­', Source)) %>%
+        filter(Gene %in% protein_coding_genes)
 
     short_a_tails = if (is_host) {
         # Calculated in ./scripts/plot-global-poly-a-lengths as the mean
