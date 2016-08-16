@@ -226,7 +226,9 @@ plots = data/plots/uninfected-poly-a-lengths-density.pdf \
 		data/plots/infected-poly-a-fold-change-boxplot.pdf \
 		data/plots/uninfected-poly-a-fold-change-boxplot.png \
 		data/plots/infected-poly-a-fold-change-boxplot.png \
-		data/plots/viral-poly-u-lengths.pdf
+		data/plots/uninfected-host-uridylation-barplot.pdf \
+		data/plots/infected-host-uridylation-barplot.pdf \
+		data/plots/infected-orv-uridylation-barplot.pdf
 
 .PHONY: plots
 plots: ${plots}
@@ -253,6 +255,9 @@ data/plots/%-poly-a-fold-change-boxplot.png data/plots/%-poly-a-fold-change-boxp
 		--infection-response 'raw/Genes upregulated in inf rde-1 vs inf N2 from Sarkies et al 2012 supp table1.tsv' \
 		'$<'
 
-data/plots/viral-poly-u-lengths.pdf: data/taginfo/tail-mod-summary.tsv
+nth = $(word $1,$(subst -, ,$2))
+
+data/plots/%-uridylation-barplot.pdf: data/taginfo/all-tailinfo.tsv
 	mkdir -p "$(dir $@)"
-	./scripts/plot-viral-poly-u-lengths --plot '$@' '$<'
+	./scripts/plot-uridylation --plot '$@' --treatment '$(call nth,1,$*)' \
+		--which '$(call nth,2,$*)' '$<'
