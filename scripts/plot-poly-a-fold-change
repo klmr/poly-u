@@ -57,9 +57,7 @@ sys$run({
         labs(x = 'Gene set', y = expression(log[2]('fold change'))) +
         scale_x_discrete(labels = c('All', 'Germline', 'Infection\nresponse'),
                          limits = c('All', 'Germline', 'Infection response')) +
-        scale_y_continuous(labels = unicode_minus) +
-        scale_color_manual(values = c('gray50', 'tomato', 'cornflowerblue'),
-                           limits = c('All', 'Germline', 'Infection response'))
+        scale_y_continuous(labels = unicode_minus)
 
     ggsave(args$plot, p, width = 3, height = 3, dpi = 1200)
 })

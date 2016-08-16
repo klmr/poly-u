@@ -23,8 +23,8 @@ sys$run({
     io = modules::import('ebi-predocs/ebits/io')
     modules::import_package('dplyr', attach = TRUE)
     tidyr = modules::import_package('tidyr')
-    modules::import('./theme', attach = TRUE)
     modules::import_package('ggplot2', attach = TRUE)
+    modules::import('./theme', attach = TRUE)
     modules::import('./runmean', attach = TRUE)
 
     germline_genes = io$read_table(args$germline, header = TRUE)[[1]]
@@ -61,9 +61,7 @@ sys$run({
         geom_linerange(aes(ymin = ymin, ymax = ymax), size = 0.5, alpha = 0.25) +
         geom_line() +
         facet_wrap(~ Geneset) +
-        labs(x = 'Poly(A) length', y = 'Read density (arb. unit)') +
-        scale_color_manual(values = c('tomato', 'cornflowerblue'),
-                           limits = c('WT', 'KO'))
+        labs(x = 'Poly(A) length', y = 'Read density (arb. unit)')
 
     ggsave(args$plot, p, width = 7, height = 3)
 })

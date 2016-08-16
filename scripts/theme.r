@@ -10,5 +10,16 @@ theme = theme_bw() +
 
 theme_set(theme)
 
+.color_values = c('gray50', 'tomato', 'cornflowerblue', 'tomato', 'cornflowerblue')
+.color_limits = c('All', 'Germline', 'Infection response', 'WT', 'KO')
+
 scale_color_discrete = function ()
-    gg$scale_color_grey()
+    gg$scale_color_manual(values = setNames(.color_values, .color_limits))
+
+scale_fill_discrete = function ()
+    gg$scale_fill_manual(values = setNames(.color_values, .color_limits))
+
+ggplot = function (data = NULL, mapping = aes(), ..., environment = parent.frame())
+    gg$ggplot(data = data, mapping = mapping, ..., environment = environment) +
+        scale_color_discrete() +
+        scale_fill_discrete()

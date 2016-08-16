@@ -14,6 +14,10 @@ sys$run({
     viral_mod = io$read_table(args$summary, header = TRUE, na.strings = NA) %>%
         filter(Source != 'host', Mod == '' | Mod == 'T', Treatment == 'Infected') %>%
         select(-Mod, -Treatment) %>%
+        # FIXME: Use JUST viral RNA here.
+        group_by(Type, Treatment, Sample, Source) %>%
+        mutate(Frequency = Frequency = sum(Frequency)) %>%
+        ungroup() %>%
         mutate(Source = sub('-', '­', Source)) %>%
         group_by(Type, Source, ModLength) %>%
         mutate(min = min(Frequency), max = max(Frequency),
