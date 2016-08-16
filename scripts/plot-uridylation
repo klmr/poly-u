@@ -28,7 +28,16 @@ sys$run({
         filter(comparer(Source, 'host')) %>%
         mutate(Source = sub('-', '­', Source))
 
-    uridylation = tailinfo %>%
+    short_a_tails = if (is_host) {
+        # Calculated in ./scripts/plot-global-poly-a-lengths as the mean
+        # between the density peaks.
+        cutoff = c(uninfected = 41, infected = 38)
+        filter(tailinfo, `pA length` < cutoff[args$treatment])
+    } else {
+        tailinfo
+    }
+
+    uridylation = short_a_tails %>%
         filter(Treatment == capitalize(args$treatment)) %>%
         mutate_when(Mod != 'T', ModLength = 0) %>%
         mutate(U = cut(ModLength, c(1, 2, Inf), include.lowest = TRUE,
