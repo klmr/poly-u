@@ -1,0 +1,52 @@
+#!/usr/bin/env Rscript
+
+sys = modules::import('klmr/sys')
+modules::import('klmr/functional/lambda')
+
+clamp = function (x, min, max)
+    pmin(pmax(x, min), max)
+
+capitalize = function (str)
+    paste0(toupper(substr(str, 1, 1)), substr(str, 2, nchar(str)))
+
+sys$run({
+    args = sys$cmd$parse(arg('tailinfo', 'the tailinfo file'),
+                         opt('t', 'treatment', 'which treatment (infected, uninfected)',
+                             validate = x -> x %in% c('infected', 'uninfected')))
+
+    io = modules::import('ebi-predocs/ebits/io')
+    dplyr = modules::import_package('dplyr', attach = TRUE)
+    tibble = modules::import_package('tibble')
+    modules::import('./mutate_when', attach = TRUE)
+
+    tailinfo = io$read_table(args$tailinfo, header = TRUE, na.strings = NA) %>%
+        filter(Source == 'host') %>%
+        filter(Treatment == capitalize(args$treatment)) %>%
+        mutate(palen = clamp(`pA length`, 0, 80))
+
+    cutoff = c(uninfected = 41, infected = 38)
+    short_a_tails = filter(tailinfo, `pA length` < cutoff[args$treatment])
+
+    test_set = unique(filter(short_a_tails, Type == 'KO')$Gene)
+    background_set = unique(filter(short_a_tails, Type == 'WT')$Gene)
+    complete_set = unique(c(test_set, background_set))
+
+    library(topGO)
+    go_data = new('topGOdata', description = '', ontology = 'BP',
+                  allGenes = setNames(as.integer(complete_set %in% test_set), complete_set),
+                  geneSel = x -> x == 1, nodeSize = 10,
+                  annot = annFUN.org, mapping = 'org.Ce.eg.db', ID = 'Ensembl')
+
+    enrichment = runTest(go_data, algorithm = 'weight01', statistic = 'fisher')
+
+    num_significant = sum(score(enrichment) < 0.05)
+
+    scores = GenTable(go_data, `Adjusted p-value` = enrichment,
+                      topNodes = num_significant, numChar = 100) %>%
+        dplyr$rename(GO = GO.ID) %>%
+        dplyr$select(GO, Term, `Adjusted p-value`)
+
+    io$write_table(scores, stdout(), sep = '\t')
+})
+
+# vim: ft=r
