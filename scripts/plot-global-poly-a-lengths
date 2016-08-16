@@ -37,8 +37,14 @@ sys$run({
         summarize(ymin = min(y), ymax = max(y), y = mean(y)) %>%
         ungroup()
 
+    peaks = tailinfo_density %>%
+        group_by(Type) %>%
+        filter(between(x, 10, 70)) %>%
+        summarize(x = x[which.max(y)], y = max(y))
+
     p = ggplot(tailinfo_density) +
         aes(x, y, color = Type) +
+        geom_vline(xintercept = mean(peaks$x), color = 'gray50') +
         geom_linerange(aes(ymin = ymin, ymax = ymax), size = 0.5, alpha = 0.25) +
         geom_line() +
         geom_point(size = 0.5, color = 'white') +
