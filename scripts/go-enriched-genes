@@ -1,0 +1,58 @@
+#!/usr/bin/env Rscript
+
+sys = modules::import('klmr/sys')
+modules::import('klmr/functional/lambda')
+
+clamp = function (x, min, max)
+    pmin(pmax(x, min), max)
+
+capitalize = function (str)
+    paste0(toupper(substr(str, 1, 1)), substr(str, 2, nchar(str)))
+
+sys$run({
+    args = sys$cmd$parse(arg('tailinfo', 'the tailinfo file'),
+                         arg('go-terms', 'filename of table with enriched GO terms'),
+                         opt('t', 'treatment', 'which treatment (infected, uninfected)',
+                             validate = x -> x %in% c('infected', 'uninfected')))
+
+    io = modules::import('ebi-predocs/ebits/io')
+    dplyr = modules::import_package('dplyr', attach = TRUE)
+    tidyr = modules::import_package('tidyr')
+
+    tailinfo = io$read_table(args$tailinfo, header = TRUE, na.strings = NA) %>%
+        filter(Source == 'host') %>%
+        filter(Treatment == capitalize(args$treatment)) %>%
+        mutate(palen = clamp(`pA length`, 0, 80))
+
+    cutoff = c(uninfected = 41, infected = 38)
+    short_a_tails = filter(tailinfo, `pA length` < cutoff[args$treatment])
+
+    tailinfo_summary = short_a_tails %>%
+        mutate(Sample = paste0(Type, Sample)) %>%
+        group_by(Gene, Sample) %>%
+        summarize(`pA length` = mean(`pA length`)) %>%
+        ungroup() %>%
+        tidyr$spread(Sample, `pA length`)
+
+    go_terms = io$read_table(args$go_terms, header = TRUE) %>% slice(1 : 20)
+
+    # NB: Overrides previously imported functions. Ugh.
+    library(org.Ce.eg.db)
+
+    go_gene_map = org.Ce.eg.db %>%
+        select(keys = go_terms$GO, keytype = 'GO',
+               columns = c('GO', 'ENSEMBL', 'SYMBOL')) %>%
+        dplyr$select(-EVIDENCE, -ONTOLOGY) %>%
+        dplyr$rename(Gene = ENSEMBL, Symbol = SYMBOL) %>%
+        dplyr$filter(! is.na(Gene)) %>%
+        tidyr$nest(GO, .key = GO) %>%
+        dplyr$mutate(GO = lapply(GO, `[[`, 'GO')) %>%
+        dplyr$mutate(GO = unlist(lapply(GO, paste, collapse = ', ')))
+
+    go_genes = inner_join(tailinfo_summary, go_gene_map, by = 'Gene') %>%
+        dplyr$select(Gene, Symbol, GO, WT1, WT2, KO1, KO2)
+
+    io$write_table(go_genes, stdout(), sep = '\t')
+})
+
+# vim: ft=r
