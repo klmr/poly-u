@@ -271,3 +271,6 @@ enrichment: ${enrichment}
 data/go-enrichment-%-short-pa-ko.tsv: data/taginfo/all-tailinfo.tsv
 	mkdir -p "$(dir $@)"
 	./scripts/short-tail-enrichment --treatment '$*' '$<' > '$@'
+
+data/short-tail-go-enriched-genes.tsv: data/taginfo/all-tailinfo.tsv data/go-enrichment-infected-short-pa-ko.tsv
+	./scripts/go-enriched-genes --treatment infected $+ > '$@'
